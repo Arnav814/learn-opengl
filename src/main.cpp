@@ -7,7 +7,7 @@
 #include <string>
 #include <unordered_map>
 
-const GLuint WIDTH = 800, HEIGHT = 600;
+const GLuint INIT_WIDTH = 800, INIT_HEIGHT = 600;
 
 typedef unsigned int uint;
 
@@ -45,7 +45,7 @@ int main(void) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-	SDL_Window* window = SDL_CreateWindow("[glad] GL with SDL", WIDTH, HEIGHT, SDL_WINDOW_OPENGL);
+	SDL_Window* window = SDL_CreateWindow("[glad] GL with SDL", INIT_WIDTH, INIT_HEIGHT, SDL_WINDOW_OPENGL);
 	SDL_SetWindowResizable(window, true);
 
 	SDL_GLContext context = SDL_GL_CreateContext(window);
@@ -53,7 +53,7 @@ int main(void) {
 	int version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
 	std::println("GLAD version: {}", version);
 
-	glViewport(0, 0, WIDTH, HEIGHT);
+	glViewport(0, 0, INIT_WIDTH, INIT_HEIGHT);
 
 	const char vertexShaderSrc[] = {
 #embed "./shaders/vertexShader.vert.glsl"
@@ -104,7 +104,8 @@ int main(void) {
 
 	std::println("vbo: {}; vao: {}", vertBufObj, vertAttribObj);
 
-	int exit = 0;
+	bool exit = false;
+	bool resized = false;
 	while (not exit) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
@@ -112,11 +113,18 @@ int main(void) {
 			case SDL_EVENT_QUIT: exit = 1; break;
 			case SDL_EVENT_KEY_UP:
 				if (event.key.key == SDLK_ESCAPE) {
-					exit = 1;
+					exit = true;
 				}
 				break;
+			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: resized = true; break;
 			default: break;
 			}
+		}
+
+		if (resized) {
+			int width, height;
+			SDL_GetWindowSizeInPixels(window, &width, &height);
+			glViewport(0, 0, width, height);
 		}
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
