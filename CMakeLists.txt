@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.29)
-project(learn-opengl LANGUAGES CXX)
+project(learn-opengl)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -13,9 +13,12 @@ FetchContent_Declare(
 	SYSTEM)
 set(SDL_SHARED OFF)
 set(SDL_STATIC ON)
+
 FetchContent_MakeAvailable(SDL)
 
-add_executable(prog src/main.cpp)
+add_executable(prog src/main.cpp glad/src/gl.c)
 target_compile_features(prog PRIVATE cxx_std_23)
+
+target_include_directories(prog PRIVATE ./glad/include)
 target_link_libraries(prog PRIVATE SDL3::SDL3)
 

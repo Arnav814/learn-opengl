@@ -1,60 +1,51 @@
+// gcc example/c/gl_sdl2.c build/src/gl.c -Ibuild/include `sdl2-config --libs --cflags` -ldl
+#include <glad/gl.h>
+
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
-#include <stdexcept>
-#include <thread>
-#include <chrono>
+#include <SDL3/SDL_opengl.h>
 
-namespace chrono = std::chrono;
+const GLuint WIDTH = 800, HEIGHT = 600;
 
-constexpr int SCREEN_WIDTH = 640;
-constexpr int SCREEN_HEIGHT = 480;
+int main(void) {
+	// code without checking for errors
+	SDL_Init(SDL_INIT_VIDEO);
 
-// The window we'll be rendering to
-SDL_Window* gWindow = nullptr;
-// The surface contained by the window
-SDL_Surface* gScreenSurface = nullptr;
-// The image we will load and show on the screen
-SDL_Surface* gHelloWorld = nullptr;
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-// Initialize SDL
-void init() {
-	bool success = true;
-	if (not SDL_Init(SDL_INIT_VIDEO)) {
-		SDL_Log("SDL could not initialize! SDL error: %s\n", SDL_GetError());
-		success = false;
-	} else {
-		// Create window
-		if (gWindow = SDL_CreateWindow("SDL3 Tutorial: Hello SDL3", SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-		    gWindow == nullptr) {
-			SDL_Log("Window could not be created! SDL error: %s\n", SDL_GetError());
-			success = false;
-		} else {
-			// Get window surface
-			gScreenSurface = SDL_GetWindowSurface(gWindow);
+	SDL_Window* window = SDL_CreateWindow("[glad] GL with SDL", WIDTH, HEIGHT, SDL_WINDOW_OPENGL);
+
+	SDL_GLContext context = SDL_GL_CreateContext(window);
+
+	int version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
+
+	int exit = 0;
+	while (!exit) {
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+			case SDL_EVENT_QUIT: exit = 1; break;
+			case SDL_EVENT_KEY_UP:
+				if (event.key.key == SDLK_ESCAPE) {
+					exit = 1;
+				}
+				break;
+			default: break;
+			}
 		}
+
+		glClearColor(0.7f, 0.9f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		SDL_GL_SwapWindow(window);
+		SDL_Delay(1);
 	}
 
-	if (not success) throw std::runtime_error("Failed to initialize SDL3!");
-}
-
-void close() {
-	// Clean up surface
-	SDL_DestroySurface(gHelloWorld);
-	gHelloWorld = nullptr;
-
-	// Destroy window
-	SDL_DestroyWindow(gWindow);
-	gWindow = nullptr;
-	gScreenSurface = nullptr;
-
-	// Quit SDL subsystems
+	SDL_GL_DestroyContext(context);
+	SDL_DestroyWindow(window);
 	SDL_Quit();
-}
-
-int main() {
-	init();
-	std::this_thread::sleep_for(chrono::seconds(10));
-	close();
 
 	return 0;
 }

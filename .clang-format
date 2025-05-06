@@ -27,12 +27,16 @@ IncludeCategories:
   - Regex: '^"'
     Priority: 1
     SortPriority: 1
-  - Regex: '^<glm'
+  - Regex: '^<glad'
     Priority: 3
-  - Regex: '^<boost'
+  - Regex: '^<glm'
     Priority: 4
-  - Regex: '.*'
+  - Regex: '^<boost'
     Priority: 5
+  - Regex: '^<SDL3'
+    Priority: 6
+  - Regex: '.*'
+    Priority: 999
 
 IndentWidth: 4
 ContinuationIndentWidth: 4
