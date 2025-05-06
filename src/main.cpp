@@ -16,13 +16,16 @@ int main(void) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 	SDL_Window* window = SDL_CreateWindow("[glad] GL with SDL", WIDTH, HEIGHT, SDL_WINDOW_OPENGL);
+	SDL_SetWindowResizable(window, true);
 
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 
-	int version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
+	int version [[maybe_unused]] = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
+
+	glViewport(0, 0, 800, 600);
 
 	int exit = 0;
-	while (!exit) {
+	while (not exit) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
