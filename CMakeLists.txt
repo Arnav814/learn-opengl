@@ -34,6 +34,14 @@ CPMAddPackage(
 	SYSTEM ON
 )
 
+CPMAddPackage(
+	NAME glm
+	GITHUB_REPOSITORY "g-truc/glm"
+	GIT_TAG 1.0.1
+	EXCLUDE_FROM_ALL ON
+	SYSTEM ON
+)
+
 add_executable(prog)
 target_compile_features(prog PRIVATE cxx_std_23)
 include("src/filelist.cmake")
@@ -42,4 +50,5 @@ target_sources(prog PRIVATE ./glad/src/gl.c)
 target_include_directories(prog PRIVATE ./glad/include)
 target_link_libraries(prog PRIVATE SDL3::SDL3)
 target_link_libraries(prog PRIVATE magic_enum::magic_enum)
+target_link_libraries(prog PRIVATE glm::glm)
 
