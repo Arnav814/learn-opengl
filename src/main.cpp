@@ -1,3 +1,5 @@
+#include "shaders.hpp"
+
 #include <glad/gl.h>
 
 #include <SDL3/SDL.h>
@@ -11,31 +13,6 @@
 const GLuint INIT_WIDTH = 800, INIT_HEIGHT = 600;
 
 typedef unsigned int uint;
-
-uint compileShader(const std::string& shaderSrc, const uint shaderType) {
-	static std::unordered_map<uint, std::string> reverseGlEnum{
-	    // {GL_COMPUTE_SHADER, "GL_COMPUTE_SHADER"},
-	    {GL_VERTEX_SHADER,   "GL_VERTEX_SHADER"  },
-	    // {GL_TESS_CONTROL_SHADER, "GL_TESS_CONTROL_SHADER"},
-	    // {GL_TESS_EVALUATION_SHADER, "GL_TESS_EVALUATION_SHADER"},
-	    {GL_GEOMETRY_SHADER, "GL_GEOMETRY_SHADER"},
-	    {GL_FRAGMENT_SHADER, "GL_FRAGMENT_SHADER"},
-	};
-
-	auto asPtr = shaderSrc.c_str();
-	uint shader = glCreateShader(shaderType);
-	glShaderSource(shader, 1, &asPtr, nullptr);
-	glCompileShader(shader);
-	int success;
-	char infoLog[512];
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-	if (not success) {
-		glGetShaderInfoLog(shader, 512, NULL, infoLog);
-		throw std::runtime_error(std::format("ERROR: failed to compile {} shader: {}.",
-		                                     reverseGlEnum[shaderType], infoLog));
-	}
-	return shader;
-}
 
 int main(void) {
 	// code without checking for errors
@@ -64,23 +41,7 @@ int main(void) {
 #embed "./shaders/fragmentShader.frag.glsl"
 	    , 0};
 
-	uint vertexShader = compileShader(std::string(vertexShaderSrc), GL_VERTEX_SHADER);
-	uint fragmentShader = compileShader(std::string(fragmentShaderSrc), GL_FRAGMENT_SHADER);
-
-	uint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-	int success;
-	char infoLog[512];
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (not success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		throw std::runtime_error(std::format("ERROR: failed to link shader program: {}.", infoLog));
-	}
-
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	ShaderProgram shaderProgram{std::string(vertexShaderSrc), std::string(fragmentShaderSrc)};
 
 	constexpr float vertices[] = {
 	    // position       || color           |
@@ -153,10 +114,9 @@ int main(void) {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		float colorVal = sin(secsSinceInit) / 2.f + 0.5f; // between 0 and 1
-		int vertexColorLocation = glGetUniformLocation(shaderProgram, "greenColor");
 
-		glUseProgram(shaderProgram);
-		glUniform1f(vertexColorLocation, colorVal);
+		shaderProgram.use();
+		shaderProgram.setUniform("greenColor", colorVal);
 		glBindVertexArray(vertAttribObj);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
@@ -168,7 +128,7 @@ int main(void) {
 	glDeleteVertexArrays(1, &vertAttribObj);
 	glDeleteBuffers(1, &vertBufObj);
 	glDeleteBuffers(1, &elemBufObj);
-	glDeleteProgram(shaderProgram);
+	shaderProgram.~ShaderProgram();
 
 	SDL_GL_DestroyContext(context);
 	SDL_DestroyWindow(window);
