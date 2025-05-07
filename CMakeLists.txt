@@ -26,8 +26,10 @@ CPMAddPackage(
 		"SDL_DISABLE_INSTALL ON"
 )
 
-add_executable(prog src/main.cpp glad/src/gl.c)
+add_executable(prog)
 target_compile_features(prog PRIVATE cxx_std_23)
+include("src/filelist.cmake")
+target_sources(prog PRIVATE ./glad/src/gl.c)
 
 target_include_directories(prog PRIVATE ./glad/include)
 target_link_libraries(prog PRIVATE SDL3::SDL3)
