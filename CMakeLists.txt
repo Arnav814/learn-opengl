@@ -14,7 +14,7 @@ include(${CMAKE_CURRENT_BINARY_DIR}/cmake/CPM.cmake)
 
 CPMAddPackage(
 	NAME SDL
-	GIT_REPOSITORY "https://github.com/libsdl-org/SDL.git"
+	GITHUB_REPOSITORY "libsdl-org/SDL"
 	VERSION "3.2.12"
 	GIT_TAG "release-3.2.12"
 	EXCLUDE_FROM_ALL ON
@@ -26,6 +26,14 @@ CPMAddPackage(
 		"SDL_DISABLE_INSTALL ON"
 )
 
+CPMAddPackage(
+	NAME magic_enum
+	GITHUB_REPOSITORY "Neargye/magic_enum"
+	GIT_TAG "v0.9.7"
+	EXCLUDE_FROM_ALL ON
+	SYSTEM ON
+)
+
 add_executable(prog)
 target_compile_features(prog PRIVATE cxx_std_23)
 include("src/filelist.cmake")
@@ -33,4 +41,5 @@ target_sources(prog PRIVATE ./glad/src/gl.c)
 
 target_include_directories(prog PRIVATE ./glad/include)
 target_link_libraries(prog PRIVATE SDL3::SDL3)
+target_link_libraries(prog PRIVATE magic_enum::magic_enum)
 

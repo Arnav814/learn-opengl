@@ -35,6 +35,8 @@ IncludeCategories:
     Priority: 5
   - Regex: '^<SDL3'
     Priority: 6
+  - Regex: '^<magic_enum'
+    Priority: 7
   - Regex: '.*'
     Priority: 999
 
