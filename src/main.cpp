@@ -45,7 +45,8 @@ int main(void) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-	SDL_Window* window = SDL_CreateWindow("[glad] GL with SDL", INIT_WIDTH, INIT_HEIGHT, SDL_WINDOW_OPENGL);
+	SDL_Window* window =
+	    SDL_CreateWindow("[glad] GL with SDL", INIT_WIDTH, INIT_HEIGHT, SDL_WINDOW_OPENGL);
 	SDL_SetWindowResizable(window, true);
 
 	SDL_GLContext context = SDL_GL_CreateContext(window);
@@ -81,19 +82,28 @@ int main(void) {
 	glDeleteShader(fragmentShader);
 
 	constexpr float vertices[] = {
-	    // clang-format off
-		-0.5f, -0.5f, 0.0f,
-		 0.5f, -0.5f, 0.0f,
-		 0.0f,  0.5f, 0.0f
-	    // clang-format on
+	    0.5f,  0.5f,  0.0f, // top right
+	    0.5f,  -0.5f, 0.0f, // bottom right
+	    -0.5f, -0.5f, 0.0f, // bottom left
+	    -0.5f, 0.5f,  0.0f // top left
+	};
+
+	constexpr int indicies[] = {
+	    0, 1, 3, //
+	    1, 2, 3, //
 	};
 
 	uint vertBufObj;
 	uint vertAttribObj;
+	uint elemBufObj;
 	glGenVertexArrays(1, &vertAttribObj);
 	glGenBuffers(1, &vertBufObj);
-
+	glGenBuffers(1, &elemBufObj);
 	glBindVertexArray(vertAttribObj);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elemBufObj);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
+
 	glBindBuffer(GL_ARRAY_BUFFER, vertBufObj);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
@@ -101,6 +111,8 @@ int main(void) {
 	glEnableVertexAttribArray(0);
 
 	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	std::println("vbo: {}; vao: {}", vertBufObj, vertAttribObj);
 
@@ -127,19 +139,23 @@ int main(void) {
 			glViewport(0, 0, width, height);
 		}
 
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glUseProgram(shaderProgram);
 		glBindVertexArray(vertAttribObj);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 
 		SDL_GL_SwapWindow(window);
-		SDL_Delay(1);
+		SDL_Delay(1000/60);
 	}
 
 	glDeleteVertexArrays(1, &vertAttribObj);
 	glDeleteBuffers(1, &vertBufObj);
+	glDeleteBuffers(1, &elemBufObj);
 	glDeleteProgram(shaderProgram);
 
 	SDL_GL_DestroyContext(context);
