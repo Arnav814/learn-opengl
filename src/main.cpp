@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 
+#include <cmath>
 #include <print>
 #include <string>
 #include <unordered_map>
@@ -82,10 +83,11 @@ int main(void) {
 	glDeleteShader(fragmentShader);
 
 	constexpr float vertices[] = {
-	    0.5f,  0.5f,  0.0f, // top right
-	    0.5f,  -0.5f, 0.0f, // bottom right
-	    -0.5f, -0.5f, 0.0f, // bottom left
-	    -0.5f, 0.5f,  0.0f // top left
+	    // position       || color           |
+	    0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, // top right
+	    0.5f,  -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // bottom right
+	    -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, // bottom left
+	    -0.5f, 0.5f,  0.0f, 0.0f, 0.0f, 0.0f, // top left
 	};
 
 	constexpr int indicies[] = {
@@ -107,8 +109,13 @@ int main(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, vertBufObj);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	// position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	// color
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -139,18 +146,23 @@ int main(void) {
 			glViewport(0, 0, width, height);
 		}
 
+		float secsSinceInit = static_cast<float>(SDL_GetTicks()) / 1000.f;
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		float colorVal = sin(secsSinceInit) / 2.f + 0.5f; // between 0 and 1
+		int vertexColorLocation = glGetUniformLocation(shaderProgram, "greenColor");
+
 		glUseProgram(shaderProgram);
+		glUniform1f(vertexColorLocation, colorVal);
 		glBindVertexArray(vertAttribObj);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
 		SDL_GL_SwapWindow(window);
-		SDL_Delay(1000/60);
+		SDL_Delay(1'000 / 60);
 	}
 
 	glDeleteVertexArrays(1, &vertAttribObj);
