@@ -3,5 +3,6 @@
 
 target_sources(prog PRIVATE
 	"./src/main.cpp"
+	"./src/stbImageBuild.cpp"
 )
 

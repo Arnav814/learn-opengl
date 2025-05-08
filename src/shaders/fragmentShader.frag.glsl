@@ -1,10 +1,12 @@
 #version 330 core
 in vec3 pxColor;
+in vec2 texCoord;
 
 out vec4 fragColor;
 
-uniform float greenColor;
+uniform sampler2D containerTexture;
+uniform sampler2D faceTexture;
 
 void main() {
-	fragColor = vec4(pxColor.r, greenColor, pxColor.b, 1.0f);
+	fragColor = mix(texture(containerTexture, texCoord), texture(faceTexture, texCoord), 0.2);
 } 

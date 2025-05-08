@@ -1,3 +1,5 @@
+#include "common.hpp"
+#include "loadTexture.hpp"
 #include "shaders.hpp"
 
 #include <glad/gl.h>
@@ -11,8 +13,6 @@
 #include <unordered_map>
 
 const GLuint INIT_WIDTH = 800, INIT_HEIGHT = 600;
-
-typedef unsigned int uint;
 
 int main(void) {
 	// code without checking for errors
@@ -34,6 +34,8 @@ int main(void) {
 
 	glViewport(0, 0, INIT_WIDTH, INIT_HEIGHT);
 
+	// SHADERS
+
 	const char vertexShaderSrc[] = {
 #embed "./shaders/vertexShader.vert.glsl"
 	    , 0};
@@ -43,12 +45,14 @@ int main(void) {
 
 	ShaderProgram shaderProgram{std::string(vertexShaderSrc), std::string(fragmentShaderSrc)};
 
+	// VERTEXES AND TRIANGLES
+
 	constexpr float vertices[] = {
-	    // position       || color           |
-	    0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, // top right
-	    0.5f,  -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, // bottom right
-	    -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, // bottom left
-	    -0.5f, 0.5f,  0.0f, 0.0f, 0.0f, 0.0f, // top left
+	    // position       || color          || texture coords |
+	    0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
+	    0.5f,  -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, // bottom right
+	    -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+	    -0.5f, 0.5f,  0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, // top left
 	};
 
 	constexpr int indicies[] = {
@@ -71,16 +75,41 @@ int main(void) {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	// position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	// color
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	// texture coords
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// TEXTURES
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glActiveTexture(GL_TEXTURE0);
+	uint containterTexture = loadTexture("../media/container.jpg");
+	glBindTexture(GL_TEXTURE_2D, containterTexture);
+
+	glActiveTexture(GL_TEXTURE1);
+	uint faceTexture = loadTexture("../media/awesomeface.png");
+	glBindTexture(GL_TEXTURE_2D, faceTexture);
+
+	shaderProgram.use();
+	shaderProgram.setUniform("containterTexture", 0);
+	shaderProgram.setUniform("faceTexture", 1);
+
+	// RENDER LOOP
 
 	bool exit = false;
 	bool resized = false;
@@ -105,16 +134,12 @@ int main(void) {
 			glViewport(0, 0, width, height);
 		}
 
-		float secsSinceInit = static_cast<float>(SDL_GetTicks()) / 1000.f;
+		float secsSinceInit [[maybe_unused]] = static_cast<float>(SDL_GetTicks()) / 1000.f;
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		float colorVal = sin(secsSinceInit) / 2.f + 0.5f; // between 0 and 1
-
-		shaderProgram.use();
-		shaderProgram.setUniform("greenColor", colorVal);
 		glBindVertexArray(vertAttribObj);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);

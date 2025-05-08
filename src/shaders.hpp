@@ -1,5 +1,7 @@
 #ifndef SHADERS_HPP
 #define SHADERS_HPP
+#include "common.hpp"
+
 #include <glad/gl.h>
 
 #include <glm/ext/vector_bool2.hpp>
@@ -21,8 +23,6 @@
 #include <format>
 #include <print>
 #include <string>
-
-typedef unsigned int uint;
 
 enum class ShaderType { vertexShader, geometryShader, fragmentShader };
 
@@ -78,9 +78,7 @@ class ShaderProgram {
 		glDeleteShader(fragmentShader);
 	}
 
-	~ShaderProgram() {
-		glDeleteProgram(this->shaderProgram);
-	}
+	~ShaderProgram() { glDeleteProgram(this->shaderProgram); }
 
 	void use() { glUseProgram(this->shaderProgram); }
 
