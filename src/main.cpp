@@ -92,18 +92,23 @@ int main(void) {
 
 	// TEXTURES
 
+	glActiveTexture(GL_TEXTURE0);
+	uint containterTexture = loadTexture("../media/container.jpg");
+	glBindTexture(GL_TEXTURE_2D, containterTexture);
+
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glActiveTexture(GL_TEXTURE0);
-	uint containterTexture = loadTexture("../media/container.jpg");
-	glBindTexture(GL_TEXTURE_2D, containterTexture);
-
 	glActiveTexture(GL_TEXTURE1);
 	uint faceTexture = loadTexture("../media/awesomeface.png");
 	glBindTexture(GL_TEXTURE_2D, faceTexture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	shaderProgram.use();
 	shaderProgram.setUniform("containterTexture", 0);
