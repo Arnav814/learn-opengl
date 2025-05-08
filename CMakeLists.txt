@@ -42,6 +42,20 @@ CPMAddPackage(
 	SYSTEM ON
 )
 
+CPMAddPackage(
+	NAME stb
+	GITHUB_REPOSITORY "nothings/stb"
+	VERSION 2.30 # version for stb_image.h: all of them have different versions
+	GIT_TAG "f0569113c93ad095470c54bf34a17b36646bbbb5"
+	DOWNLOAD_ONLY ON
+	SYSTEM ON
+)
+
+if (stb_ADDED)
+	add_library(stb INTERFACE IMPORTED)
+	target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
+endif()
+
 add_executable(prog)
 target_compile_features(prog PRIVATE cxx_std_23)
 include("src/filelist.cmake")
@@ -51,4 +65,5 @@ target_include_directories(prog PRIVATE ./glad/include)
 target_link_libraries(prog PRIVATE SDL3::SDL3)
 target_link_libraries(prog PRIVATE magic_enum::magic_enum)
 target_link_libraries(prog PRIVATE glm::glm)
+target_link_libraries(prog PRIVATE stb)
 
