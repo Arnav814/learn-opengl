@@ -118,10 +118,7 @@ int main(void) {
 
 	bool exit = false;
 	bool resized = false;
-	signed char arrowMovement = 0; // -1, 0, or 1
-	float opacityVal = 0.0;
 	while (not exit) {
-		arrowMovement = 0;
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -129,10 +126,6 @@ int main(void) {
 			case SDL_EVENT_KEY_UP:
 				if (event.key.key == SDLK_ESCAPE) {
 					exit = true;
-				} else if (event.key.scancode == SDL_SCANCODE_UP) {
-					arrowMovement += 1;
-				} else if (event.key.scancode == SDL_SCANCODE_DOWN) {
-					arrowMovement -= 1;
 				}
 				break;
 			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: resized = true; break;
@@ -152,9 +145,6 @@ int main(void) {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		opacityVal += ((float)arrowMovement) / 10.0f;
-		opacityVal = std::max(0.0f, std::min(1.0f, opacityVal));
-		shaderProgram.setUniform("opacity", opacityVal);
 		glBindVertexArray(vertAttribObj);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
