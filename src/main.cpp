@@ -4,13 +4,17 @@
 
 #include <glad/gl.h>
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/vec4.hpp>
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 
 #include <cmath>
 #include <print>
 #include <string>
-#include <unordered_map>
 
 const GLuint INIT_WIDTH = 800, INIT_HEIGHT = 600;
 
@@ -139,11 +143,16 @@ int main(void) {
 			glViewport(0, 0, width, height);
 		}
 
-		float secsSinceInit [[maybe_unused]] = static_cast<float>(SDL_GetTicks()) / 1000.f;
+		float secsSinceInit = static_cast<float>(SDL_GetTicks()) / 1000.f;
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		glm::mat4 trans(1);
+		trans = glm::rotate(trans, secsSinceInit, glm::vec3(0, 0, 1));
+		trans = glm::translate(trans, glm::vec3(0.5, -0.5, 0));
+		shaderProgram.setUniform("transform", trans);
 
 		glBindVertexArray(vertAttribObj);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

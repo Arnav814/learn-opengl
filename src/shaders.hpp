@@ -13,6 +13,10 @@
 #include <glm/ext/vector_int2.hpp>
 #include <glm/ext/vector_int3.hpp>
 #include <glm/ext/vector_int4.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/mat2x2.hpp>
+#include <glm/mat3x3.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -136,6 +140,21 @@ class ShaderProgram {
 	void setUniform(const std::string& name, glm::vec4 value) {
 		glUniform4f(glGetUniformLocation(this->shaderProgram, name.c_str()), value.x, value.y,
 		            value.z, value.w);
+	}
+
+	void setUniform(const std::string& name, glm::mat2 value) {
+		glUniformMatrix2fv(glGetUniformLocation(this->shaderProgram, name.c_str()), 1, GL_FALSE,
+		                   glm::value_ptr(value));
+	}
+
+	void setUniform(const std::string& name, glm::mat3 value) {
+		glUniformMatrix3fv(glGetUniformLocation(this->shaderProgram, name.c_str()), 1, GL_FALSE,
+		                   glm::value_ptr(value));
+	}
+
+	void setUniform(const std::string& name, glm::mat4 value) {
+		glUniformMatrix4fv(glGetUniformLocation(this->shaderProgram, name.c_str()), 1, GL_FALSE,
+		                   glm::value_ptr(value));
 	}
 };
 
