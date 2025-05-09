@@ -150,8 +150,8 @@ int main(void) {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glm::mat4 trans(1);
-		trans = glm::rotate(trans, secsSinceInit, glm::vec3(0, 0, 1));
 		trans = glm::translate(trans, glm::vec3(0.5, -0.5, 0));
+		trans = glm::rotate(trans, secsSinceInit, glm::vec3(0, 0, 1));
 		shaderProgram.setUniform("transform", trans);
 
 		glBindVertexArray(vertAttribObj);
