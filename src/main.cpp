@@ -206,7 +206,6 @@ int main(void) {
 			glm::vec3 cubePosition = cubePositions[i];
 			obj2world = glm::mat4(1);
 			obj2world = glm::translate(obj2world, cubePosition);
-			obj2world = glm::scale(obj2world, glm::vec3(1.3, 1.3, 1.3)); // It looks small to me
 			float angle = glm::radians(20.f * i); // random angle per cube
 			obj2world = glm::rotate(obj2world, angle, glm::vec3(1, 0.5, 0));
 			shaderProgram.setUniform("obj2world", obj2world);
