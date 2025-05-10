@@ -42,11 +42,12 @@ int main(void) {
 
 	// PERSPECTIVE
 
-	glm::mat4 obj2world = glm::rotate(glm::mat4(1.f), glm::radians(-55.f), glm::vec3(1, 0, 0));
-	obj2world = glm::scale(obj2world, glm::vec3(2, 2, 2)); // It looks small for me
-	glm::mat4 world2cam =
-	    glm::translate(glm::mat4(1.f), -glm::vec3(0, 0, 3)); // translate in reverse direction
-	glm::mat4 projection; // will be set in the render loop's resize callback
+	// updated in render loop
+	glm::mat4 obj2world = glm::mat4(1);
+	glm::mat4 world2cam = glm::mat4(1);
+	glm::mat4 projection = glm::mat4(1);
+	
+	glEnable(GL_DEPTH_TEST);
 
 	// SHADERS
 
@@ -62,16 +63,66 @@ int main(void) {
 	// VERTEXES AND TRIANGLES
 
 	constexpr float vertices[] = {
+	    // clang-format off
 	    // position       || texture coords |
-	    0.5f,  0.5f,  0.0f, 1.0f, 1.0f, // top right
-	    0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, // bottom right
-	    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // bottom left
-	    -0.5f, 0.5f,  0.0f, 0.0f, 1.0f, // top left
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0
+	    // clang-format on
 	};
 
+	// TODO: proper indexed drawing
 	constexpr int indicies[] = {
-	    0, 1, 3, //
-	    1, 2, 3, //
+	    0,  1,  2, //
+	    3,  4,  5, //
+	    6,  7,  8, //
+	    9,  10, 11, //
+	    12, 13, 14, //
+	    15, 16, 17, //
+	    18, 19, 20, //
+	    21, 22, 23, //
+	    24, 25, 26, //
+	    27, 28, 29, //
+	    30, 31, 32, //
+	    33, 34, 35 //
 	};
 
 	uint vertBufObj;
@@ -146,7 +197,7 @@ int main(void) {
 		if (resized) {
 			int width, height;
 			SDL_GetWindowSizeInPixels(window, &width, &height);
-			projection = glm::perspective(45.f, (float) width / height, 0.1f, 100.f);
+			projection = glm::perspective(45.f, (float)width / height, 0.1f, 100.f);
 			glViewport(0, 0, width, height);
 		}
 
@@ -154,14 +205,19 @@ int main(void) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		obj2world =
+		    glm::rotate(glm::mat4(1.f), secsSinceInit * glm::radians(-55.f), glm::vec3(1, 0.5, 0));
+		obj2world = glm::scale(obj2world, glm::vec3(1.5, 1.5, 1.5)); // It looks small to me
+		world2cam =
+		    glm::translate(glm::mat4(1.f), -glm::vec3(0, 0, 3)); // translate in reverse direction
 		shaderProgram.setUniform("obj2world", obj2world);
 		shaderProgram.setUniform("world2cam", world2cam);
 		shaderProgram.setUniform("projection", projection);
 
 		glBindVertexArray(vertAttribObj);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
 		SDL_GL_SwapWindow(window);
