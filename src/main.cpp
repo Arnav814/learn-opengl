@@ -227,9 +227,13 @@ int main(void) {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		world2cam = glm::mat4(1);
-		world2cam =
-		    glm::translate(world2cam, glm::vec3(0, 0, -3)); // translate in reverse direction
+		constexpr float radius = 10.f;
+		float camX = sin(secsSinceInit) * radius;
+		float camZ = cos(secsSinceInit) * radius;
+		camera.position = glm::vec3(camX, 0, camZ);
+		camera.target = glm::vec3(0, 0, 0);
+		world2cam = camera.toCamSpace();
+
 		shaderProgram.setUniform("world2cam", world2cam);
 		shaderProgram.setUniform("projection", projection);
 
