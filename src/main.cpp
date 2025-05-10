@@ -204,9 +204,13 @@ int main(void) {
 		glBindVertexArray(vertAttribObj);
 		for (uint i = 0; i < cubePositions.size(); i++) {
 			glm::vec3 cubePosition = cubePositions[i];
+			float angle = glm::radians(20.f * i); // random angle per cube
+			if (i % 3 == 0) {
+				angle += secsSinceInit;
+			}
+
 			obj2world = glm::mat4(1);
 			obj2world = glm::translate(obj2world, cubePosition);
-			float angle = glm::radians(20.f * i); // random angle per cube
 			obj2world = glm::rotate(obj2world, angle, glm::vec3(1, 0.5, 0));
 			shaderProgram.setUniform("obj2world", obj2world);
 
