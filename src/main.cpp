@@ -185,7 +185,7 @@ int main(void) {
 		if (resized) {
 			int width, height;
 			SDL_GetWindowSizeInPixels(window, &width, &height);
-			projection = glm::perspective(45.f, (float)width / height, 0.1f, 100.f);
+			projection = glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 100.f);
 			glViewport(0, 0, width, height);
 		}
 
