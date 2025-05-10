@@ -54,8 +54,10 @@ int main(void) {
 	// CAMERA
 	Camera camera{
 	    .position = glm::vec3(0, 0, 3),
-	    .target = glm::vec3(0, 0, 0),
+	    .front = glm::vec3(0, 0, -1),
+	    .up = glm::vec3(0, 1, 0),
 	};
+	float cameraSpeed = 2.5; // movement per second
 
 	// SHADERS
 
@@ -173,22 +175,42 @@ int main(void) {
 
 	// RENDER LOOP
 
+	// map for if each scancode is pressed
+	std::array<bool, SDL_SCANCODE_COUNT> scancodeMap{false};
+
 	bool exit = false;
 	bool resized = true; // populate the perspective matrix
+	float lastFrameTime = 0; // measured since init
 	while (not exit) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 			case SDL_EVENT_QUIT: exit = 1; break;
+			case SDL_EVENT_KEY_DOWN: scancodeMap.at(event.key.scancode) = true; break;
 			case SDL_EVENT_KEY_UP:
-				if (event.key.key == SDLK_ESCAPE) {
-					exit = true;
+				switch (event.key.key) {
+				case SDLK_ESCAPE: exit = true; break;
+				default: break;
 				}
+				scancodeMap.at(event.key.scancode) = false;
 				break;
 			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: resized = true; break;
 			default: break;
 			}
 		}
+
+		float secsSinceInit = static_cast<float>(SDL_GetTicks()) / 1000.f;
+		float deltaTime = secsSinceInit - lastFrameTime;
+		float frameCameraSpeed = deltaTime * cameraSpeed; // normalized by time
+
+		if (scancodeMap[SDL_SCANCODE_W]) camera.position += frameCameraSpeed * camera.front;
+		if (scancodeMap[SDL_SCANCODE_S]) camera.position -= frameCameraSpeed * camera.front;
+		if (scancodeMap[SDL_SCANCODE_A])
+			camera.position -=
+			    glm::normalize(glm::cross(camera.front, camera.up)) * frameCameraSpeed;
+		if (scancodeMap[SDL_SCANCODE_D])
+			camera.position +=
+			    glm::normalize(glm::cross(camera.front, camera.up)) * frameCameraSpeed;
 
 		if (resized) {
 			int width, height;
@@ -197,19 +219,11 @@ int main(void) {
 			glViewport(0, 0, width, height);
 		}
 
-		float secsSinceInit = static_cast<float>(SDL_GetTicks()) / 1000.f;
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		constexpr float radius = 10.f;
-		float camX = sin(secsSinceInit) * radius;
-		float camZ = cos(secsSinceInit) * radius;
-		camera.position = glm::vec3(camX, 0, camZ);
-		camera.target = glm::vec3(0, 0, 0);
 		world2cam = camera.toCamSpace();
-
 		shaderProgram.setUniform("world2cam", world2cam);
 		shaderProgram.setUniform("projection", projection);
 
@@ -226,6 +240,7 @@ int main(void) {
 		}
 		glBindVertexArray(0);
 
+		lastFrameTime = secsSinceInit;
 		SDL_GL_SwapWindow(window);
 		SDL_Delay(1'000 / 60);
 	}
