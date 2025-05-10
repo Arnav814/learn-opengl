@@ -100,6 +100,19 @@ int main(void) {
 	    11, 15, 16 //
 	};
 
+	std::array cubePositions{
+	    glm::vec3(0.0f, 0.0f, 0.0f), //
+	    glm::vec3(2.0f, 5.0f, -15.0f), //
+	    glm::vec3(-1.5f, -2.2f, -2.5f), //
+	    glm::vec3(-3.8f, -2.0f, -12.3f), //
+	    glm::vec3(2.4f, -0.4f, -3.5f), //
+	    glm::vec3(-1.7f, 3.0f, -7.5f), //
+	    glm::vec3(1.3f, -2.0f, -2.5f), //
+	    glm::vec3(1.5f, 2.0f, -2.5f), //
+	    glm::vec3(1.5f, 0.2f, -1.5f), //
+	    glm::vec3(-1.3f, 1.0f, -1.5f) //
+	};
+
 	uint vertBufObj;
 	uint vertAttribObj;
 	uint elemBufObj;
@@ -182,17 +195,24 @@ int main(void) {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		obj2world =
-		    glm::rotate(glm::mat4(1.f), secsSinceInit * glm::radians(-55.f), glm::vec3(1, 0.5, 0));
-		obj2world = glm::scale(obj2world, glm::vec3(1.5, 1.5, 1.5)); // It looks small to me
+		world2cam = glm::mat4(1);
 		world2cam =
-		    glm::translate(glm::mat4(1.f), -glm::vec3(0, 0, 3)); // translate in reverse direction
-		shaderProgram.setUniform("obj2world", obj2world);
+		    glm::translate(world2cam, glm::vec3(0, 0, -3)); // translate in reverse direction
 		shaderProgram.setUniform("world2cam", world2cam);
 		shaderProgram.setUniform("projection", projection);
 
 		glBindVertexArray(vertAttribObj);
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		for (uint i = 0; i < cubePositions.size(); i++) {
+			glm::vec3 cubePosition = cubePositions[i];
+			obj2world = glm::mat4(1);
+			obj2world = glm::translate(obj2world, cubePosition);
+			obj2world = glm::scale(obj2world, glm::vec3(1.3, 1.3, 1.3)); // It looks small to me
+			float angle = glm::radians(20.f * i); // random angle per cube
+			obj2world = glm::rotate(obj2world, angle, glm::vec3(1, 0.5, 0));
+			shaderProgram.setUniform("obj2world", obj2world);
+
+			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		}
 		glBindVertexArray(0);
 
 		SDL_GL_SwapWindow(window);
