@@ -5,6 +5,8 @@
 #include <glad/gl.h>
 
 #include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/mat4x4.hpp>
@@ -19,6 +21,30 @@
 #include <string>
 
 const GLuint INIT_WIDTH = 800, INIT_HEIGHT = 600;
+
+struct Camera {
+	glm::vec3 position;
+	glm::vec3 target; // a point the camera should point at
+
+	// normalized vector from position to target
+	// reverse direction of the camera (+z axis)
+	// +z points into the camera, -z points away
+	glm::vec3 targetToPos() const { return glm::normalize(this->position - this->target); }
+
+	// points in the -x axis
+	glm::vec3 right() const {
+		return glm::normalize(glm::cross(glm::vec3(0, 1, 0), this->targetToPos()));
+	}
+
+	// points in the +y axis
+	glm::vec3 up() const {
+		// inputs are already normalized, no need to do it again
+		return glm::cross(this->targetToPos(), this->right());
+	}
+
+	// the returned matrix tranforms world => camera space
+	glm::dmat4 toCamSpace() const { return glm::lookAt(this->position, this->target, this->up()); }
+};
 
 int main(void) {
 	// code without checking for errors
@@ -48,6 +74,12 @@ int main(void) {
 	glm::mat4 projection = glm::mat4(1);
 
 	glEnable(GL_DEPTH_TEST);
+
+	// CAMERA
+	Camera camera{
+	    .position = glm::vec3(0, 0, 3),
+	    .target = glm::vec3(0, 0, 0),
+	};
 
 	// SHADERS
 
