@@ -4,9 +4,11 @@
 
 #include <glad/gl.h>
 
+#include <glm/ext/matrix_clip_space.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/mat4x4.hpp>
+#include <glm/trigonometric.hpp>
 #include <glm/vec4.hpp>
 
 #include <SDL3/SDL.h>
@@ -38,6 +40,14 @@ int main(void) {
 
 	glViewport(0, 0, INIT_WIDTH, INIT_HEIGHT);
 
+	// PERSPECTIVE
+
+	glm::mat4 obj2world = glm::rotate(glm::mat4(1.f), glm::radians(-55.f), glm::vec3(1, 0, 0));
+	obj2world = glm::scale(obj2world, glm::vec3(2, 2, 2)); // It looks small for me
+	glm::mat4 world2cam =
+	    glm::translate(glm::mat4(1.f), -glm::vec3(0, 0, 3)); // translate in reverse direction
+	glm::mat4 projection; // will be set in the render loop's resize callback
+
 	// SHADERS
 
 	const char vertexShaderSrc[] = {
@@ -52,11 +62,11 @@ int main(void) {
 	// VERTEXES AND TRIANGLES
 
 	constexpr float vertices[] = {
-	    // position       || color          || texture coords |
-	    0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
-	    0.5f,  -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, // bottom right
-	    -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
-	    -0.5f, 0.5f,  0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, // top left
+	    // position       || texture coords |
+	    0.5f,  0.5f,  0.0f, 1.0f, 1.0f, // top right
+	    0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, // bottom right
+	    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // bottom left
+	    -0.5f, 0.5f,  0.0f, 0.0f, 1.0f, // top left
 	};
 
 	constexpr int indicies[] = {
@@ -79,16 +89,12 @@ int main(void) {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	// position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// color
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
 	// texture coords
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -121,7 +127,7 @@ int main(void) {
 	// RENDER LOOP
 
 	bool exit = false;
-	bool resized = false;
+	bool resized = true; // populate the perspective matrix
 	while (not exit) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
@@ -140,6 +146,7 @@ int main(void) {
 		if (resized) {
 			int width, height;
 			SDL_GetWindowSizeInPixels(window, &width, &height);
+			projection = glm::perspective(45.f, (float) width / height, 0.1f, 100.f);
 			glViewport(0, 0, width, height);
 		}
 
@@ -149,10 +156,9 @@ int main(void) {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glm::mat4 trans(1);
-		trans = glm::translate(trans, glm::vec3(0.5, -0.5, 0));
-		trans = glm::rotate(trans, secsSinceInit, glm::vec3(0, 0, 1));
-		shaderProgram.setUniform("transform", trans);
+		shaderProgram.setUniform("obj2world", obj2world);
+		shaderProgram.setUniform("world2cam", world2cam);
+		shaderProgram.setUniform("projection", projection);
 
 		glBindVertexArray(vertAttribObj);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
