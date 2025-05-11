@@ -34,6 +34,7 @@ int main(void) {
 	SDL_Window* window =
 	    SDL_CreateWindow("[glad] GL with SDL", INIT_WIDTH, INIT_HEIGHT, SDL_WINDOW_OPENGL);
 	SDL_SetWindowResizable(window, true);
+	SDL_SetWindowRelativeMouseMode(window, true);
 
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 
@@ -52,12 +53,19 @@ int main(void) {
 	glEnable(GL_DEPTH_TEST);
 
 	// CAMERA
+
+	EulerAngle playerAngle{
+	    .yaw = 0.f,
+	    .pitch = 0.f,
+	};
+	constexpr float rotateSpeed = glm::radians(0.1f); // in radians per pixel moved
+
 	Camera camera{
 	    .position = glm::vec3(0, 0, 3),
 	    .front = glm::vec3(0, 0, -1),
 	    .up = glm::vec3(0, 1, 0),
 	};
-	float cameraSpeed = 2.5; // movement per second
+	constexpr float cameraSpeed = 2.5; // movement per second
 
 	// SHADERS
 
@@ -182,6 +190,11 @@ int main(void) {
 	bool resized = true; // populate the perspective matrix
 	float lastFrameTime = 0; // measured since init
 	while (not exit) {
+
+		float secsSinceInit = static_cast<float>(SDL_GetTicks()) / 1000.f;
+		float deltaTime = secsSinceInit - lastFrameTime;
+		float frameCameraSpeed = deltaTime * cameraSpeed; // normalized by time
+
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -190,18 +203,22 @@ int main(void) {
 			case SDL_EVENT_KEY_UP:
 				switch (event.key.key) {
 				case SDLK_ESCAPE: exit = true; break;
-				default: break;
 				}
 				scancodeMap.at(event.key.scancode) = false;
 				break;
 			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: resized = true; break;
-			default: break;
+			case SDL_EVENT_MOUSE_MOTION:
+				playerAngle.yaw += (float)event.motion.xrel * rotateSpeed;
+				playerAngle.pitch -= (float)event.motion.yrel * rotateSpeed;
+
+				if (playerAngle.pitch > glm::radians(89.f)) playerAngle.pitch = glm::radians(89.f);
+				if (playerAngle.pitch < glm::radians(-89.f))
+					playerAngle.pitch = glm::radians(-89.f);
+
+				camera.front = playerAngle.toDirection();
+				break;
 			}
 		}
-
-		float secsSinceInit = static_cast<float>(SDL_GetTicks()) / 1000.f;
-		float deltaTime = secsSinceInit - lastFrameTime;
-		float frameCameraSpeed = deltaTime * cameraSpeed; // normalized by time
 
 		if (scancodeMap[SDL_SCANCODE_W]) camera.position += frameCameraSpeed * camera.front;
 		if (scancodeMap[SDL_SCANCODE_S]) camera.position -= frameCameraSpeed * camera.front;

@@ -5,6 +5,18 @@
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 
+// ignores roll
+struct EulerAngle {
+	float yaw;
+	float pitch;
+
+	// normalized direction the angle points
+	glm::vec3 toDirection() const {
+		return glm::vec3(cos(this->yaw) * cos(this->pitch), sin(this->pitch),
+		                 sin(this->yaw) * cos(this->pitch));
+	}
+};
+
 struct Camera {
 	glm::vec3 position;
 	glm::vec3 front;
