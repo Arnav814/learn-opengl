@@ -19,6 +19,7 @@
 
 #include <cmath>
 #include <print>
+#include <random>
 #include <string>
 const GLuint INIT_WIDTH = 800, INIT_HEIGHT = 600;
 
@@ -110,18 +111,16 @@ int main(void) {
 	    11, 15, 16 //
 	};
 
-	std::array cubePositions{
-	    glm::vec3(0.0f, 0.0f, 0.0f), //
-	    glm::vec3(2.0f, 5.0f, -15.0f), //
-	    glm::vec3(-1.5f, -2.2f, -2.5f), //
-	    glm::vec3(-3.8f, -2.0f, -12.3f), //
-	    glm::vec3(2.4f, -0.4f, -3.5f), //
-	    glm::vec3(-1.7f, 3.0f, -7.5f), //
-	    glm::vec3(1.3f, -2.0f, -2.5f), //
-	    glm::vec3(1.5f, 2.0f, -2.5f), //
-	    glm::vec3(1.5f, 0.2f, -1.5f), //
-	    glm::vec3(-1.3f, 1.0f, -1.5f) //
-	};
+	std::vector<glm::vec3> cubePositions;
+
+	std::random_device dev;
+	std::mt19937 rng(dev());
+	std::uniform_int_distribution<std::mt19937::result_type> dist(0, 2'000);
+	for (uint i = 0; i < 10'000; i++) {
+		cubePositions.push_back(glm::vec3((float)((int)dist(rng) - 100) / 100.f,
+		                                  (float)((int)dist(rng) - 100) / 100.f,
+		                                  (float)((int)dist(rng) - 100) / 100.f));
+	}
 
 	uint vertBufObj;
 	uint vertAttribObj;
