@@ -47,25 +47,10 @@ int main(void) {
 
 	// updated in render loop
 	glm::mat4 obj2world = glm::mat4(1);
-	glm::mat4 world2cam = glm::mat4(1);
-	glm::mat4 projection = glm::mat4(1);
 
 	glEnable(GL_DEPTH_TEST);
 
-	// CAMERA
-
-	EulerAngle playerAngle{
-	    .yaw = 0.f,
-	    .pitch = 0.f,
-	};
-	constexpr float rotateSpeed = glm::radians(0.1f); // in radians per pixel moved
-
-	Camera camera{
-	    .position = glm::vec3(0, 0, 3),
-	    .front = glm::vec3(0, 0, -1),
-	    .up = glm::vec3(0, 1, 0),
-	};
-	constexpr float cameraSpeed = 2.5; // movement per second
+	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
 
 	// SHADERS
 
@@ -193,7 +178,6 @@ int main(void) {
 
 		float secsSinceInit = static_cast<float>(SDL_GetTicks()) / 1000.f;
 		float deltaTime = secsSinceInit - lastFrameTime;
-		float frameCameraSpeed = deltaTime * cameraSpeed; // normalized by time
 
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
@@ -207,32 +191,23 @@ int main(void) {
 				scancodeMap.at(event.key.scancode) = false;
 				break;
 			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: resized = true; break;
-			case SDL_EVENT_MOUSE_MOTION:
-				playerAngle.yaw += (float)event.motion.xrel * rotateSpeed;
-				playerAngle.pitch -= (float)event.motion.yrel * rotateSpeed;
-
-				if (playerAngle.pitch > glm::radians(89.f)) playerAngle.pitch = glm::radians(89.f);
-				if (playerAngle.pitch < glm::radians(-89.f))
-					playerAngle.pitch = glm::radians(-89.f);
-
-				camera.front = playerAngle.toDirection();
-				break;
+			case SDL_EVENT_MOUSE_MOTION: camera.rotateBy(event.motion); break;
+			case SDL_EVENT_MOUSE_WHEEL: camera.zoomBy(event.wheel); break;
 			}
 		}
 
-		if (scancodeMap[SDL_SCANCODE_W]) camera.position += frameCameraSpeed * camera.front;
-		if (scancodeMap[SDL_SCANCODE_S]) camera.position -= frameCameraSpeed * camera.front;
-		if (scancodeMap[SDL_SCANCODE_A])
-			camera.position -=
-			    glm::normalize(glm::cross(camera.front, camera.up)) * frameCameraSpeed;
-		if (scancodeMap[SDL_SCANCODE_D])
-			camera.position +=
-			    glm::normalize(glm::cross(camera.front, camera.up)) * frameCameraSpeed;
+		camera.moveBy(scancodeMap[SDL_SCANCODE_W], //
+		              scancodeMap[SDL_SCANCODE_S], //
+		              scancodeMap[SDL_SCANCODE_A], //
+		              scancodeMap[SDL_SCANCODE_D], //
+		              scancodeMap[SDL_SCANCODE_R], //
+		              scancodeMap[SDL_SCANCODE_F], //
+		              deltaTime);
 
 		if (resized) {
 			int width, height;
 			SDL_GetWindowSizeInPixels(window, &width, &height);
-			projection = glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 100.f);
+			camera.setWindowSize(glm::ivec2(width, height));
 			glViewport(0, 0, width, height);
 		}
 
@@ -240,9 +215,8 @@ int main(void) {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		world2cam = camera.toCamSpace();
-		shaderProgram.setUniform("world2cam", world2cam);
-		shaderProgram.setUniform("projection", projection);
+		shaderProgram.setUniform("world2cam", camera.toCamSpace());
+		shaderProgram.setUniform("projection", camera.projectionMat());
 
 		glBindVertexArray(vertAttribObj);
 		for (uint i = 0; i < cubePositions.size(); i++) {
