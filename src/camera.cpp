@@ -11,7 +11,9 @@
 #include <optional>
 
 void Camera::recalculate() {
-	this->front = this->view.toDirection();
+	this->front = glm::normalize(glm::vec3(cos(this->view.yaw) * cos(this->view.pitch), //
+	                                       sin(this->view.pitch), //
+	                                       sin(this->view.yaw) * cos(this->view.pitch)));
 	this->right = glm::normalize(glm::cross(this->front, WORLD_UP));
 	this->up = glm::normalize(glm::cross(this->right, this->front));
 }
@@ -47,13 +49,20 @@ glm::dmat4 Camera::projectionMat() const {
 
 void Camera::moveBy(const bool forwards, const bool backwards, const bool left, const bool right,
                     const bool up, const bool down, const float frameTime) {
+
 	float scaledMovementSpeed = this->movementSensitivity * frameTime;
-	if (forwards) this->position += this->front * scaledMovementSpeed;
-	if (backwards) this->position -= this->front * scaledMovementSpeed;
+
+	// front without the y componenent
+	glm::vec3 flatFront = this->front;
+	flatFront.y = 0;
+	flatFront = glm::normalize(flatFront);
+
+	if (forwards) this->position += flatFront * scaledMovementSpeed;
+	if (backwards) this->position -= flatFront * scaledMovementSpeed;
 	if (right) this->position += this->right * scaledMovementSpeed;
 	if (left) this->position -= this->right * scaledMovementSpeed;
-	if (up) this->position += this->up * scaledMovementSpeed;
-	if (down) this->position -= this->up * scaledMovementSpeed;
+	if (up) this->position += WORLD_UP * scaledMovementSpeed;
+	if (down) this->position -= WORLD_UP * scaledMovementSpeed;
 }
 
 void Camera::rotateBy(const SDL_MouseMotionEvent& event) {
