@@ -1,6 +1,7 @@
 #ifndef CAMERA_HPP
 #define CAMERA_HPP
 
+#include <glm/ext/vector_float3.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 
@@ -63,6 +64,10 @@ class Camera {
 	// frameTime is multiplied by sensitivity to get the amount to move
 	void moveBy(const bool forwards, const bool backwards, const bool left, const bool right,
 	            const bool up, const bool down, const float frameTime);
+
+	void setPosition(const glm::vec3& position) { this->position = position; }
+
+	glm::vec3 getPosition() const { return this->position; }
 
 	// frameTime is multiplied by sensitivity to get the amount to rotate
 	void rotateBy(const SDL_MouseMotionEvent& event);

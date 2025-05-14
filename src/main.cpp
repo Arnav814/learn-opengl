@@ -51,40 +51,47 @@ int main(void) {
 	glEnable(GL_DEPTH_TEST);
 
 	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
+	camera.setPosition(glm::vec3(0, 0, 3));
+
+	constexpr glm::vec3 lightPos = glm::vec3(1.2, 1, 2);
 
 	// SHADERS
 
 	const char vertexShaderSrc[] = {
-#embed "./shaders/vertexShader.vert.glsl"
+#embed "./shaders/all.vert.glsl"
 	    , 0};
-	const char fragmentShaderSrc[] = {
-#embed "./shaders/fragmentShader.frag.glsl"
+	const char objFragShaderSrc[] = {
+#embed "./shaders/object.frag.glsl"
+	    , 0};
+	const char lightFragShaderSrc[] = {
+#embed "./shaders/lightCube.frag.glsl"
 	    , 0};
 
-	ShaderProgram shaderProgram{std::string(vertexShaderSrc), std::string(fragmentShaderSrc)};
+	ShaderProgram objShader{std::string(vertexShaderSrc), std::string(objFragShaderSrc)};
+	ShaderProgram lightShader{std::string(vertexShaderSrc), std::string(lightFragShaderSrc)};
 
 	// VERTEXES AND TRIANGLES
 
 	constexpr float vertices[] = {
 	    // clang-format off
-	    // position        || texture coords |
-		-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f, 1.0f, 1.0f,
-		-0.5f,  0.5f, -0.5f, 0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f, 0.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f, 1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f, 0.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f, 1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f, 1.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f, 1.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f, 0.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f, 0.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f, 0.0f, 1.0
+	    // position
+		-0.5f, -0.5f, -0.5f,//
+		 0.5f, -0.5f, -0.5f,//
+		 0.5f,  0.5f, -0.5f,//
+		-0.5f,  0.5f, -0.5f,//
+		-0.5f, -0.5f,  0.5f,//
+		 0.5f, -0.5f,  0.5f,//
+		 0.5f,  0.5f,  0.5f,//
+		-0.5f,  0.5f,  0.5f,//
+		-0.5f,  0.5f,  0.5f,//
+		-0.5f,  0.5f, -0.5f,//
+		-0.5f, -0.5f, -0.5f,//
+		 0.5f,  0.5f,  0.5f,//
+		 0.5f, -0.5f, -0.5f,//
+		 0.5f, -0.5f,  0.5f,//
+		 0.5f, -0.5f, -0.5f,//
+		-0.5f,  0.5f,  0.5f,//
+		-0.5f,  0.5f, -0.5f,//
 	    // clang-format on
 	};
 
@@ -103,26 +110,15 @@ int main(void) {
 	    11, 15, 16 //
 	};
 
-	std::array cubePositions{
-	    glm::vec3(0.0f, 0.0f, 0.0f), //
-	    glm::vec3(2.0f, 5.0f, -15.0f), //
-	    glm::vec3(-1.5f, -2.2f, -2.5f), //
-	    glm::vec3(-3.8f, -2.0f, -12.3f), //
-	    glm::vec3(2.4f, -0.4f, -3.5f), //
-	    glm::vec3(-1.7f, 3.0f, -7.5f), //
-	    glm::vec3(1.3f, -2.0f, -2.5f), //
-	    glm::vec3(1.5f, 2.0f, -2.5f), //
-	    glm::vec3(1.5f, 0.2f, -1.5f), //
-	    glm::vec3(-1.3f, 1.0f, -1.5f) //
-	};
+	// CONTAINER BUFFERS
 
 	uint vertBufObj;
-	uint vertAttribObj;
+	uint objVertAttribObj;
 	uint elemBufObj;
-	glGenVertexArrays(1, &vertAttribObj);
+	glGenVertexArrays(1, &objVertAttribObj);
 	glGenBuffers(1, &vertBufObj);
 	glGenBuffers(1, &elemBufObj);
-	glBindVertexArray(vertAttribObj);
+	glBindVertexArray(objVertAttribObj);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elemBufObj);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
@@ -131,40 +127,29 @@ int main(void) {
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 	// position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// texture coords
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	// LIGHT BUFFERS
+
+	uint lightVertAttribObj;
+	glGenVertexArrays(1, &lightVertAttribObj);
+	glBindVertexArray(lightVertAttribObj);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elemBufObj);
+	glBindBuffer(GL_ARRAY_BUFFER, vertBufObj);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// TEXTURES
-
-	glActiveTexture(GL_TEXTURE0);
-	uint containterTexture = loadTexture("../media/container.jpg");
-	glBindTexture(GL_TEXTURE_2D, containterTexture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	glActiveTexture(GL_TEXTURE1);
-	uint faceTexture = loadTexture("../media/awesomeface.png");
-	glBindTexture(GL_TEXTURE_2D, faceTexture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	shaderProgram.use();
-	shaderProgram.setUniform("containterTexture", 0);
-	shaderProgram.setUniform("faceTexture", 1);
+	objShader.use();
+	objShader.setUniform("lightColor", glm::vec3(1, .5, .31));
+	objShader.setUniform("objectColor", glm::vec3(1, 1, 1));
+	objShader.stopUsing();
 
 	// RENDER LOOP
 
@@ -212,34 +197,40 @@ int main(void) {
 		}
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.1, 0.1, 0.1, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		shaderProgram.setUniform("world2cam", camera.toCamSpace());
-		shaderProgram.setUniform("projection", camera.projectionMat());
-
-		glBindVertexArray(vertAttribObj);
-		for (uint i = 0; i < cubePositions.size(); i++) {
-			glm::vec3 cubePosition = cubePositions[i];
-			obj2world = glm::mat4(1);
-			obj2world = glm::translate(obj2world, cubePosition);
-			float angle = glm::radians(20.f * i); // random angle per cube
-			obj2world = glm::rotate(obj2world, angle, glm::vec3(1, 0.5, 0));
-			shaderProgram.setUniform("obj2world", obj2world);
-
-			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-		}
+		objShader.use();
+		glBindVertexArray(objVertAttribObj);
+		obj2world = glm::mat4(1);
+		objShader.setUniform("world2cam", camera.toCamSpace());
+		objShader.setUniform("projection", camera.projectionMat());
+		objShader.setUniform("obj2world", obj2world);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
+		objShader.stopUsing();
+
+		lightShader.use();
+		glBindVertexArray(lightVertAttribObj);
+		obj2world = glm::mat4(1);
+		obj2world = glm::translate(obj2world, lightPos);
+		obj2world = glm::scale(obj2world, glm::vec3(0.2));
+		lightShader.setUniform("world2cam", camera.toCamSpace());
+		lightShader.setUniform("projection", camera.projectionMat());
+		lightShader.setUniform("obj2world", obj2world);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+		lightShader.stopUsing();
 
 		lastFrameTime = secsSinceInit;
 		SDL_GL_SwapWindow(window);
 		SDL_Delay(1'000 / 60);
 	}
 
-	glDeleteVertexArrays(1, &vertAttribObj);
+	glDeleteVertexArrays(1, &objVertAttribObj);
 	glDeleteBuffers(1, &vertBufObj);
 	glDeleteBuffers(1, &elemBufObj);
-	shaderProgram.~ShaderProgram();
+	objShader.~ShaderProgram();
 
 	SDL_GL_DestroyContext(context);
 	SDL_DestroyWindow(window);

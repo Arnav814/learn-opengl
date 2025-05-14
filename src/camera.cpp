@@ -20,7 +20,7 @@ void Camera::recalculate() {
 
 Camera::Camera(const glm::ivec2 windowSize) {
 	this->movementSensitivity = 2.5f;
-	this->rotationSensitivity = 0.025f;
+	this->rotationSensitivity = 0.01f;
 	this->zoomSensitivity = 0.025f;
 
 	this->position = glm::vec3(0, 0, 0);
