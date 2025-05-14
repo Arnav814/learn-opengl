@@ -26,61 +26,20 @@
 #include <exception>
 #include <format>
 #include <print>
+#include <regex>
+#include <sstream>
 #include <string>
 
 enum class ShaderType { vertexShader, geometryShader, fragmentShader };
-
-// converts an enum shader type to the appropriate opengl macro
-static uint enum2gl(ShaderType asEnum) {
-	switch (asEnum) {
-		using enum ShaderType;
-	case vertexShader: return GL_VERTEX_SHADER;
-	case geometryShader: return GL_GEOMETRY_SHADER;
-	case fragmentShader: return GL_FRAGMENT_SHADER;
-	}
-}
 
 class ShaderProgram {
   private:
 	uint shaderProgram;
 
-	uint compileShader(const std::string& source, ShaderType shaderType) {
-		auto asPtr = source.c_str();
-		uint shader = glCreateShader(enum2gl(shaderType));
-		glShaderSource(shader, 1, &asPtr, nullptr);
-		glCompileShader(shader);
-		int success;
-		char infoLog[1'024];
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-		if (not success) {
-			glGetShaderInfoLog(shader, 1'024, NULL, infoLog);
-			throw std::runtime_error(std::format("ERROR: failed to compile {}: {}.",
-			                                     magic_enum::enum_name(shaderType), infoLog));
-		}
-		return shader;
-	}
+	uint compileShader(const std::string& source, ShaderType shaderType);
 
   public:
-	ShaderProgram(const std::string& vertexShaderSrc, const std::string& fragmentShaderSrc) {
-		uint vertexShader = this->compileShader(vertexShaderSrc, ShaderType::vertexShader);
-		uint fragmentShader = this->compileShader(fragmentShaderSrc, ShaderType::fragmentShader);
-
-		this->shaderProgram = glCreateProgram();
-		glAttachShader(this->shaderProgram, vertexShader);
-		glAttachShader(this->shaderProgram, fragmentShader);
-		glLinkProgram(this->shaderProgram);
-		int success;
-		char infoLog[1'024];
-		glGetProgramiv(this->shaderProgram, GL_LINK_STATUS, &success);
-		if (not success) {
-			glGetProgramInfoLog(this->shaderProgram, 1'024, NULL, infoLog);
-			throw std::runtime_error(
-			    std::format("ERROR: failed to link shader program: {}.", infoLog));
-		}
-
-		glDeleteShader(vertexShader);
-		glDeleteShader(fragmentShader);
-	}
+	ShaderProgram(const std::string& vertexShaderSrc, const std::string& fragmentShaderSrc);
 
 	~ShaderProgram() { glDeleteProgram(this->shaderProgram); }
 
