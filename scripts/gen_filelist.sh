@@ -6,7 +6,7 @@ echo "
 target_sources(prog PRIVATE"
 
 # make paths relative to the project root, surround with quotes and add a tab for readability
-find . -name "*.cpp" | sed -e "s/^.\\//\t\".\\/src\\//" -e "s/$/\"/"
+find . -name "*.cpp" | sort | sed -e "s/^.\\//\t\".\\/src\\//" -e "s/$/\"/"
 
 echo -e ")\n"
 
