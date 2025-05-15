@@ -17,7 +17,7 @@ uniform Material material;
 uniform vec3 lightColor;
 
 void main() {
-	vec3 ambient = lightColor * material.ambient;
+	vec3 ambient = material.ambient;
 
 	// lighting calcs are done in world space
 	// extra normal

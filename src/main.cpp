@@ -163,6 +163,10 @@ int main(void) {
 			glViewport(0, 0, width, height);
 		}
 
+		glm::vec3 lightColor =
+		    glm::vec3(sin(secsSinceInit) / 2. + 0.7, cos(secsSinceInit) / 2. + 0.7,
+		              sin(secsSinceInit * 0.5) / 2. + 0.7);
+
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glClearColor(0.1, 0.1, 0.1, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -176,7 +180,7 @@ int main(void) {
 
 		objShader.setUniform("viewPos", camera.getPosition());
 		objShader.setUniform("lightPos", lightPos);
-		objShader.setUniform("lightColor", glm::vec3(1));
+		objShader.setUniform("lightColor", lightColor);
 		setStructUniform(objShader, "material",
 		                 Material{.ambient = glm::vec3(1, .5, .31),
 		                          .diffuse = glm::vec3(1, .5, .31),
@@ -195,6 +199,7 @@ int main(void) {
 		lightShader.setUniform("world2cam", camera.toCamSpace());
 		lightShader.setUniform("projection", camera.projectionMat());
 		lightShader.setUniform("obj2world", obj2world);
+		lightShader.setUniform("lightColor", lightColor);
 		glBindVertexArray(lightVertAttribObj);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
