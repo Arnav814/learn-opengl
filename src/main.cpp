@@ -86,14 +86,15 @@ int main(void) {
 	glBindVertexArray(objVertAttribObj);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vertBufObj);
-	glBufferData(GL_ARRAY_BUFFER, verticies.size() * sizeof(float), verticies.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, verticies.size() * sizeof(float), verticies.data(),
+	             GL_STATIC_DRAW);
 
 	// position
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	// normals
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)3);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
 	// LIGHT BUFFERS
@@ -169,6 +170,7 @@ int main(void) {
 		objShader.setUniform("world2cam", camera.toCamSpace());
 		objShader.setUniform("projection", camera.projectionMat());
 		objShader.setUniform("obj2world", obj2world);
+		objShader.setUniform("lightPos", lightPos);
 		glBindVertexArray(objVertAttribObj);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
