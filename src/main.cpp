@@ -163,9 +163,7 @@ int main(void) {
 			glViewport(0, 0, width, height);
 		}
 
-		glm::vec3 lightColor =
-		    glm::vec3(sin(secsSinceInit) / 2. + 0.7, cos(secsSinceInit) / 2. + 0.7,
-		              sin(secsSinceInit * 0.5) / 2. + 0.7);
+		glm::vec3 lightColor = glm::vec3(1);
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glClearColor(0.1, 0.1, 0.1, 1.0);
