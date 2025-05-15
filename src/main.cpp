@@ -121,6 +121,8 @@ int main(void) {
 	// map for if each scancode is pressed
 	std::array<bool, SDL_SCANCODE_COUNT> scancodeMap{false};
 
+	bool isFullscreen = false;
+
 	bool exit = false;
 	bool resized = true; // populate the perspective matrix
 	float lastFrameTime = 0; // measured since init
@@ -137,6 +139,10 @@ int main(void) {
 			case SDL_EVENT_KEY_UP:
 				switch (event.key.key) {
 				case SDLK_ESCAPE: exit = true; break;
+				case SDLK_T:
+					isFullscreen = not isFullscreen; // toggle fullscreen
+					SDL_SetWindowFullscreen(window, isFullscreen);
+					break;
 				}
 				scancodeMap.at(event.key.scancode) = false;
 				break;
