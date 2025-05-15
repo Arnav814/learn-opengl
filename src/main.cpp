@@ -170,6 +170,7 @@ int main(void) {
 		objShader.setUniform("world2cam", camera.toCamSpace());
 		objShader.setUniform("projection", camera.projectionMat());
 		objShader.setUniform("obj2world", obj2world);
+		objShader.setUniform("obj2normal", glm::mat3(glm::transpose(glm::inverse(obj2world))));
 		objShader.setUniform("lightPos", lightPos);
 		glBindVertexArray(objVertAttribObj);
 		glDrawArrays(GL_TRIANGLES, 0, 36);

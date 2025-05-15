@@ -12,6 +12,7 @@ void main() {
 	float ambientStrength = 0.1;
 	vec3 ambient = ambientStrength * lightColor;
 
+	// lighting calcs are done in world space
 	// extra normal
 	vec3 unitNormal = normalize(normal);
 	// normalized vector from the light to the point being drawn
