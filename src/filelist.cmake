@@ -6,5 +6,6 @@ target_sources(prog PRIVATE
 	"./src/main.cpp"
 	"./src/shaders.cpp"
 	"./src/stbImageBuild.cpp"
+	"./src/vertexData.cpp"
 )
 

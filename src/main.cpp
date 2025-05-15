@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "loadTexture.hpp"
 #include "shaders.hpp"
+#include "vertexData.hpp"
 
 #include <glad/gl.h>
 
@@ -20,7 +21,8 @@
 #include <cmath>
 #include <print>
 #include <string>
-const GLuint INIT_WIDTH = 800, INIT_HEIGHT = 600;
+
+constexpr uint INIT_WIDTH = 800, INIT_HEIGHT = 600;
 
 int main(void) {
 	// code without checking for errors
@@ -57,8 +59,11 @@ int main(void) {
 
 	// SHADERS
 
-	const char vertexShaderSrc[] = {
-#embed "./shaders/all.vert.glsl"
+	const char objVertShaderSrc[] = {
+#embed "./shaders/object.vert.glsl"
+	    , 0};
+	const char lightVertShaderSrc[] = {
+#embed "./shaders/lightCube.vert.glsl"
 	    , 0};
 	const char objFragShaderSrc[] = {
 #embed "./shaders/object.frag.glsl"
@@ -67,87 +72,46 @@ int main(void) {
 #embed "./shaders/lightCube.frag.glsl"
 	    , 0};
 
-	ShaderProgram objShader{std::string(vertexShaderSrc), std::string(objFragShaderSrc)};
-	ShaderProgram lightShader{std::string(vertexShaderSrc), std::string(lightFragShaderSrc)};
-
-	// VERTEXES AND TRIANGLES
-
-	constexpr float vertices[] = {
-	    // clang-format off
-	    // position
-		-0.5f, -0.5f, -0.5f,//
-		 0.5f, -0.5f, -0.5f,//
-		 0.5f,  0.5f, -0.5f,//
-		-0.5f,  0.5f, -0.5f,//
-		-0.5f, -0.5f,  0.5f,//
-		 0.5f, -0.5f,  0.5f,//
-		 0.5f,  0.5f,  0.5f,//
-		-0.5f,  0.5f,  0.5f,//
-		-0.5f,  0.5f,  0.5f,//
-		-0.5f,  0.5f, -0.5f,//
-		-0.5f, -0.5f, -0.5f,//
-		 0.5f,  0.5f,  0.5f,//
-		 0.5f, -0.5f, -0.5f,//
-		 0.5f, -0.5f,  0.5f,//
-		 0.5f, -0.5f, -0.5f,//
-		-0.5f,  0.5f,  0.5f,//
-		-0.5f,  0.5f, -0.5f,//
-	    // clang-format on
-	};
-
-	constexpr int indicies[] = {
-	    0,  1,  2, //
-	    2,  3,  0, //
-	    4,  5,  6, //
-	    6,  7,  4, //
-	    8,  9,  10, //
-	    10, 4,  8, //
-	    11, 2,  12, //
-	    12, 13, 11, //
-	    10, 14, 5, //
-	    5,  4,  10, //
-	    3,  2,  11, //
-	    11, 15, 16 //
-	};
+	ShaderProgram objShader{std::string(objVertShaderSrc), std::string(objFragShaderSrc)};
+	ShaderProgram lightShader{std::string(lightVertShaderSrc), std::string(lightFragShaderSrc)};
 
 	// CONTAINER BUFFERS
 
+	std::vector<float> verticies = getVertexData();
+
 	uint vertBufObj;
 	uint objVertAttribObj;
-	uint elemBufObj;
 	glGenVertexArrays(1, &objVertAttribObj);
 	glGenBuffers(1, &vertBufObj);
-	glGenBuffers(1, &elemBufObj);
 	glBindVertexArray(objVertAttribObj);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elemBufObj);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
-
 	glBindBuffer(GL_ARRAY_BUFFER, vertBufObj);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, verticies.size() * sizeof(float), verticies.data(), GL_STATIC_DRAW);
 
 	// position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	// normals
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)3);
+	glEnableVertexAttribArray(1);
 
 	// LIGHT BUFFERS
 
 	uint lightVertAttribObj;
 	glGenVertexArrays(1, &lightVertAttribObj);
 	glBindVertexArray(lightVertAttribObj);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elemBufObj);
 	glBindBuffer(GL_ARRAY_BUFFER, vertBufObj);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	// only position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
 	glBindVertexArray(0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	objShader.use();
-	objShader.setUniform("lightColor", glm::vec3(1, .5, .31));
+	objShader.setUniform("lightColor", glm::vec3(1, .5, .33));
 	objShader.setUniform("objectColor", glm::vec3(1, 1, 1));
 	objShader.stopUsing();
 
@@ -201,24 +165,24 @@ int main(void) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		objShader.use();
-		glBindVertexArray(objVertAttribObj);
 		obj2world = glm::mat4(1);
 		objShader.setUniform("world2cam", camera.toCamSpace());
 		objShader.setUniform("projection", camera.projectionMat());
 		objShader.setUniform("obj2world", obj2world);
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(objVertAttribObj);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 		objShader.stopUsing();
 
 		lightShader.use();
-		glBindVertexArray(lightVertAttribObj);
 		obj2world = glm::mat4(1);
 		obj2world = glm::translate(obj2world, lightPos);
 		obj2world = glm::scale(obj2world, glm::vec3(0.2));
 		lightShader.setUniform("world2cam", camera.toCamSpace());
 		lightShader.setUniform("projection", camera.projectionMat());
 		lightShader.setUniform("obj2world", obj2world);
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(lightVertAttribObj);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 		lightShader.stopUsing();
 
@@ -229,7 +193,6 @@ int main(void) {
 
 	glDeleteVertexArrays(1, &objVertAttribObj);
 	glDeleteBuffers(1, &vertBufObj);
-	glDeleteBuffers(1, &elemBufObj);
 	objShader.~ShaderProgram();
 
 	SDL_GL_DestroyContext(context);
