@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "loadTexture.hpp"
 #include "shaders.hpp"
+#include "shaderStructs.hpp"
 #include "vertexData.hpp"
 
 #include <glad/gl.h>
@@ -111,11 +112,6 @@ int main(void) {
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	objShader.use();
-	objShader.setUniform("lightColor", glm::vec3(1, .5, .33));
-	objShader.setUniform("objectColor", glm::vec3(1, 1, 1));
-	objShader.stopUsing();
-
 	// RENDER LOOP
 
 	// map for if each scancode is pressed
@@ -177,8 +173,16 @@ int main(void) {
 		objShader.setUniform("projection", camera.projectionMat());
 		objShader.setUniform("obj2world", obj2world);
 		objShader.setUniform("obj2normal", glm::mat3(glm::transpose(glm::inverse(obj2world))));
+
 		objShader.setUniform("viewPos", camera.getPosition());
 		objShader.setUniform("lightPos", lightPos);
+		objShader.setUniform("lightColor", glm::vec3(1));
+		setStructUniform(objShader, "material",
+		                 Material{.ambient = glm::vec3(1, .5, .31),
+		                          .diffuse = glm::vec3(1, .5, .31),
+		                          .specular = glm::vec3(.5, .5, .5),
+		                          .shininess = 32});
+
 		glBindVertexArray(objVertAttribObj);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
