@@ -5,6 +5,7 @@ in vec3 normal;
 out vec4 fragColor;
 
 uniform vec3 lightPos;
+uniform vec3 viewPos;
 uniform vec3 lightColor;
 uniform vec3 objectColor;
 
@@ -16,9 +17,16 @@ void main() {
 	// extra normal
 	vec3 unitNormal = normalize(normal);
 	// normalized vector from the light to the point being drawn
-	vec3 lightToFrag = normalize(lightPos - fragPos);
-	vec3 diffuse = dot(unitNormal, lightToFrag) * lightColor;
+	vec3 lightDir = normalize(lightPos - fragPos);
+	vec3 diffuse = dot(unitNormal, lightDir) * lightColor;
 
-	vec3 result = (ambient + diffuse) * objectColor;
+	// camera to drawn point
+	vec3 viewDir = normalize(viewPos - fragPos);
+	// exit vector of the reflected light
+	vec3 reflectedDir = reflect(-lightDir, unitNormal);
+	float specularIntensity = pow(max(dot(reflectedDir, viewDir), 0.0), 32);
+	vec3 specular = specularIntensity * lightColor;
+
+	vec3 result = (ambient + diffuse + specular) * objectColor;
 	fragColor = vec4(result, 1.0f);
 } 
