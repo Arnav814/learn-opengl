@@ -55,8 +55,6 @@ int main(void) {
 	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
 	camera.setPosition(glm::vec3(0, 0, 3));
 
-	constexpr glm::vec3 lightPos = glm::vec3(1.2, 1, 2);
-
 	// SHADERS
 
 	const char objVertShaderSrc[] = {
@@ -160,6 +158,8 @@ int main(void) {
 			camera.setWindowSize(glm::ivec2(width, height));
 			glViewport(0, 0, width, height);
 		}
+
+		glm::vec3 lightPos = glm::vec3(sin(secsSinceInit), 0.2, cos(secsSinceInit)) * 5.0f;
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glClearColor(0.1, 0.1, 0.1, 1.0);
