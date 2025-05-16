@@ -76,6 +76,12 @@ int main(void) {
 	ShaderProgram objShader{std::string(objVertShaderSrc), std::string(objFragShaderSrc)};
 	ShaderProgram lightShader{std::string(lightVertShaderSrc), std::string(lightFragShaderSrc)};
 
+	// TEXTURES
+
+	uint texId = loadTexture("../media/container2.jpg");
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texId);
+
 	// CONTAINER BUFFERS
 
 	std::vector<float> verticies = getVertexData();
@@ -90,13 +96,19 @@ int main(void) {
 	glBufferData(GL_ARRAY_BUFFER, verticies.size() * sizeof(float), verticies.data(),
 	             GL_STATIC_DRAW);
 
+	uint stepSize = (3 + 3 + 2) * sizeof(float);
+
 	// position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stepSize, (void*)0);
 	glEnableVertexAttribArray(0);
 
 	// normals
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stepSize, (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	// texture coords
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stepSize, (void*)((3 + 3) * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	// LIGHT BUFFERS
 
@@ -106,7 +118,7 @@ int main(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, vertBufObj);
 
 	// only position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stepSize, (void*)0);
 	glEnableVertexAttribArray(0);
 
 	glBindVertexArray(0);
@@ -177,11 +189,14 @@ int main(void) {
 		objShader.setUniform("obj2normal", glm::mat3(glm::transpose(glm::inverse(obj2world))));
 
 		objShader.setUniform("viewPos", camera.getPosition());
-		objShader.setUniform("lightPos", lightPos);
-		objShader.setUniform("lightColor", lightColor);
+		setStructUniform(objShader, "light", Light{
+					.position = lightPos,
+					.ambient = glm::vec3(.1),
+					.diffuse = glm::vec3(.5),
+					.specular = glm::vec3(.5),
+				});
 		setStructUniform(objShader, "material",
-		                 Material{.ambient = glm::vec3(1, .5, .31),
-		                          .diffuse = glm::vec3(1, .5, .31),
+		                 Material{.diffuseMap = 0, // use texture 0
 		                          .specular = glm::vec3(.5, .5, .5),
 		                          .shininess = 32});
 

@@ -14,18 +14,31 @@
 	} while (false)
 
 struct Material {
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
+	int diffuseMap; // texture id
 	glm::vec3 specular;
 	float shininess; // specular exponent
 };
 
 inline void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
                              const Material& value) {
+	SET_UNIFORM_ATTR(diffuseMap);
+	SET_UNIFORM_ATTR(specular);
+	SET_UNIFORM_ATTR(shininess);
+}
+
+struct Light {
+	glm::vec3 position;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+};
+
+inline void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
+                             const Light& value) {
+	SET_UNIFORM_ATTR(position);
 	SET_UNIFORM_ATTR(ambient);
 	SET_UNIFORM_ATTR(diffuse);
 	SET_UNIFORM_ATTR(specular);
-	SET_UNIFORM_ATTR(shininess);
 }
 
 #endif /* SHADERSTRUCTS_HPP */
