@@ -15,14 +15,14 @@
 
 struct Material {
 	int diffuseMap; // texture id
-	glm::vec3 specular;
+	int specularMap; // texture id
 	float shininess; // specular exponent
 };
 
 inline void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
                              const Material& value) {
 	SET_UNIFORM_ATTR(diffuseMap);
-	SET_UNIFORM_ATTR(specular);
+	SET_UNIFORM_ATTR(specularMap);
 	SET_UNIFORM_ATTR(shininess);
 }
 

@@ -78,9 +78,13 @@ int main(void) {
 
 	// TEXTURES
 
-	uint texId = loadTexture("../media/container2.jpg");
+	uint diffuseTexId = loadTexture("../media/container2.jpg");
+	uint specularTexId = loadTexture("../media/container2_specular.png");
+
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texId);
+	glBindTexture(GL_TEXTURE_2D, diffuseTexId);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, specularTexId);
 
 	// CONTAINER BUFFERS
 
@@ -189,15 +193,16 @@ int main(void) {
 		objShader.setUniform("obj2normal", glm::mat3(glm::transpose(glm::inverse(obj2world))));
 
 		objShader.setUniform("viewPos", camera.getPosition());
-		setStructUniform(objShader, "light", Light{
-					.position = lightPos,
-					.ambient = glm::vec3(.1),
-					.diffuse = glm::vec3(.5),
-					.specular = glm::vec3(.5),
-				});
+		setStructUniform(objShader, "light",
+		                 Light{
+		                     .position = lightPos,
+		                     .ambient = glm::vec3(.1),
+		                     .diffuse = glm::vec3(.5),
+		                     .specular = glm::vec3(.5),
+		                 });
 		setStructUniform(objShader, "material",
-		                 Material{.diffuseMap = 0, // use texture 0
-		                          .specular = glm::vec3(.5, .5, .5),
+		                 Material{.diffuseMap = 0,
+		                          .specularMap = 1,
 		                          .shininess = 32});
 
 		glBindVertexArray(objVertAttribObj);

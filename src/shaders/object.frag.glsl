@@ -14,7 +14,7 @@ struct Light {
 
 struct Material {
 	sampler2D diffuseMap; // shared for ambient and diffuse
-	vec3 specular;
+	sampler2D specularMap;
 	float shininess; // specular exponent
 };
 
@@ -24,6 +24,7 @@ uniform Material material;
 
 void main() {
 	vec3 diffuseVal = vec3(texture(material.diffuseMap, texCoord));
+	vec3 specularVal = vec3(texture(material.specularMap, texCoord));
 
 	vec3 ambient = light.ambient * diffuseVal;
 
@@ -40,7 +41,7 @@ void main() {
 	// exit vector of the reflected light
 	vec3 reflectedDir = reflect(-lightDir, unitNormal);
 	float specularIntensity = pow(max(dot(reflectedDir, viewDir), 0.0), material.shininess);
-	vec3 specular = light.specular * (specularIntensity * diffuseVal);
+	vec3 specular = light.specular * (specularIntensity * specularVal);
 
 	vec3 result = ambient + diffuse + specular;
 	fragColor = vec4(result, 1.0f);
