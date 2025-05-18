@@ -56,7 +56,7 @@ int main(void) {
 	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
 	camera.setPosition(glm::vec3(0, 0, 3));
 
-	constexpr glm::vec3 lightPos = glm::vec3(1.2, 1, 2);
+	const glm::vec3 lightDir = glm::normalize(glm::vec3(0.1, -1, 0.1));
 
 	// SHADERS
 
@@ -89,6 +89,7 @@ int main(void) {
 	// CONTAINER BUFFERS
 
 	std::vector<float> verticies = getVertexData();
+	std::vector<glm::vec3> cubePositions = getCubePositions();
 
 	uint vertBufObj;
 	uint objVertAttribObj;
@@ -179,45 +180,48 @@ int main(void) {
 			glViewport(0, 0, width, height);
 		}
 
-		glm::vec3 lightColor = glm::vec3(1);
-
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glClearColor(0.1, 0.1, 0.1, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBindVertexArray(objVertAttribObj);
 
 		objShader.use();
-		obj2world = glm::mat4(1);
 		objShader.setUniform("world2cam", camera.toCamSpace());
 		objShader.setUniform("projection", camera.projectionMat());
-		objShader.setUniform("obj2world", obj2world);
-		objShader.setUniform("obj2normal", glm::mat3(glm::transpose(glm::inverse(obj2world))));
 
 		objShader.setUniform("viewPos", camera.getPosition());
 		setStructUniform(objShader, "light",
-		                 Light{
-		                     .position = lightPos,
+		                 DirectionalLight{
+		                     .direction = lightDir,
 		                     .ambient = glm::vec3(.1),
 		                     .diffuse = glm::vec3(.5),
 		                     .specular = glm::vec3(.5),
 		                 });
 		setStructUniform(objShader, "material",
-		                 Material{.diffuseMap = 0,
-		                          .specularMap = 1,
-		                          .shininess = 32});
+		                 Material{.diffuseMap = 0, .specularMap = 1, .shininess = 32});
 
-		glBindVertexArray(objVertAttribObj);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		float angle = 0; // in radians
+		for (const glm::vec3& cubePos : cubePositions) {
+			obj2world = glm::mat4(1);
+			obj2world = glm::translate(obj2world, cubePos);
+			obj2world = glm::rotate(obj2world, angle, glm::normalize(glm::vec3(1, 2, 3)));
+			objShader.setUniform("obj2world", obj2world);
+			objShader.setUniform("obj2normal", glm::mat3(glm::transpose(glm::inverse(obj2world))));
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+			angle++;
+		}
+
 		glBindVertexArray(0);
 		objShader.stopUsing();
 
 		lightShader.use();
 		obj2world = glm::mat4(1);
-		obj2world = glm::translate(obj2world, lightPos);
-		obj2world = glm::scale(obj2world, glm::vec3(0.2));
+		obj2world = glm::translate(obj2world, -lightDir * 100.f);
+		obj2world = glm::scale(obj2world, glm::vec3(1));
 		lightShader.setUniform("world2cam", camera.toCamSpace());
 		lightShader.setUniform("projection", camera.projectionMat());
 		lightShader.setUniform("obj2world", obj2world);
-		lightShader.setUniform("lightColor", lightColor);
+		lightShader.setUniform("lightColor", glm::vec3(1));
 		glBindVertexArray(lightVertAttribObj);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);

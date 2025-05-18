@@ -26,7 +26,7 @@ inline void setStructUniform(ShaderProgram& shader, const std::string& uniformNa
 	SET_UNIFORM_ATTR(shininess);
 }
 
-struct Light {
+struct PointLight {
 	glm::vec3 position;
 	glm::vec3 ambient;
 	glm::vec3 diffuse;
@@ -34,8 +34,23 @@ struct Light {
 };
 
 inline void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const Light& value) {
+                             const PointLight& value) {
 	SET_UNIFORM_ATTR(position);
+	SET_UNIFORM_ATTR(ambient);
+	SET_UNIFORM_ATTR(diffuse);
+	SET_UNIFORM_ATTR(specular);
+}
+
+struct DirectionalLight {
+	glm::vec3 direction;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+};
+
+inline void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
+                             const DirectionalLight& value) {
+	SET_UNIFORM_ATTR(direction);
 	SET_UNIFORM_ATTR(ambient);
 	SET_UNIFORM_ATTR(diffuse);
 	SET_UNIFORM_ATTR(specular);

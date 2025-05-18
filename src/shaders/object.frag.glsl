@@ -5,8 +5,15 @@ in vec2 texCoord;
 
 out vec4 fragColor;
 
-struct Light {
+struct PointLight {
 	vec3 position;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+};
+
+struct DirectionalLight {
+	vec3 direction;
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
@@ -19,7 +26,7 @@ struct Material {
 };
 
 uniform vec3 viewPos;
-uniform Light light;
+uniform DirectionalLight light;
 uniform Material material;
 
 void main() {
@@ -32,7 +39,8 @@ void main() {
 	// extra normal
 	vec3 unitNormal = normalize(normal);
 	// normalized vector from the light to the point being drawn
-	vec3 lightDir = normalize(light.position - fragPos);
+	// vec3 lightDir = normalize(light.position - fragPos);
+	vec3 lightDir = normalize(-light.direction);
 	float diffuseIntensity = max(dot(unitNormal, lightDir), 0.0);
 	vec3 diffuse = light.diffuse * (diffuseIntensity * diffuseVal);
 
