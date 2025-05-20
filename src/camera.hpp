@@ -69,12 +69,16 @@ class Camera {
 
 	glm::vec3 getPosition() const { return this->position; }
 
+	glm::vec3 getFront() const { return this->front; }
+
+	glm::vec3 getUp() const { return this->up; }
+
 	// frameTime is multiplied by sensitivity to get the amount to rotate
 	void rotateBy(const SDL_MouseMotionEvent& event);
 
 	void zoomBy(const SDL_MouseWheelEvent& event);
 
-	// TODO: functions to get/set position, view, etc if needed
+	// TODO: functions to get/set position, view, etc directly if needed
 };
 
 #endif /* CAMERA_HPP */

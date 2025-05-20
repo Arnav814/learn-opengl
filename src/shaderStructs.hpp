@@ -5,26 +5,18 @@
 
 #include <glm/vec3.hpp>
 
-// these setters are decoupled from the actual shader class to make updating them easier
-
-// makes writing shader setters easier
-#define SET_UNIFORM_ATTR(attr) \
-	do { \
-		shader.setUniform(uniformName + "." + #attr, value.attr); \
-	} while (false)
-
 struct Material {
 	int diffuseMap; // texture id
 	int specularMap; // texture id
 	float shininess; // specular exponent
 };
 
-inline void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const Material& value) {
-	SET_UNIFORM_ATTR(diffuseMap);
-	SET_UNIFORM_ATTR(specularMap);
-	SET_UNIFORM_ATTR(shininess);
-}
+struct DirectionalLight {
+	glm::vec3 direction;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+};
 
 struct PointLight {
 	glm::vec3 position;
@@ -39,30 +31,32 @@ struct PointLight {
 	float quadratic;
 };
 
-inline void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const PointLight& value) {
-	SET_UNIFORM_ATTR(position);
-	SET_UNIFORM_ATTR(ambient);
-	SET_UNIFORM_ATTR(diffuse);
-	SET_UNIFORM_ATTR(specular);
-	SET_UNIFORM_ATTR(constant);
-	SET_UNIFORM_ATTR(linear);
-	SET_UNIFORM_ATTR(quadratic);
-}
-
-struct DirectionalLight {
+struct SpotLight {
+	glm::vec3 position;
 	glm::vec3 direction;
+
 	glm::vec3 ambient;
 	glm::vec3 diffuse;
 	glm::vec3 specular;
+
+	// for attenuation
+	float constant;
+	float linear;
+	float quadratic;
+
+	// cos of the covered angle
+	float cutoff;
 };
 
-inline void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const DirectionalLight& value) {
-	SET_UNIFORM_ATTR(direction);
-	SET_UNIFORM_ATTR(ambient);
-	SET_UNIFORM_ATTR(diffuse);
-	SET_UNIFORM_ATTR(specular);
-}
+// these setters are decoupled from the actual shader class to make updating them easier
+
+void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
+                             const Material& value);
+void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
+                             const DirectionalLight& value);
+void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
+                             const PointLight& value);
+void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
+                             const SpotLight& value);
 
 #endif /* SHADERSTRUCTS_HPP */

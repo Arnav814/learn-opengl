@@ -192,14 +192,16 @@ int main(void) {
 
 		objShader.setUniform("viewPos", camera.getPosition());
 		setStructUniform(objShader, "light",
-		                 PointLight{
-		                     .position = lightPos,
+		                 SpotLight{
+		                     .position = camera.getPosition(),
+		                     .direction = camera.getFront(),
 		                     .ambient = glm::vec3(.1),
 		                     .diffuse = glm::vec3(.5),
 		                     .specular = glm::vec3(.5),
-							 .constant = 1.0,
-							 .linear = 0.09,
-							 .quadratic = 0.032,
+		                     .constant = 1.0,
+		                     .linear = 0.09,
+		                     .quadratic = 0.032,
+		                     .cutoff = glm::cos(glm::radians(12.5f)),
 		                 });
 		setStructUniform(objShader, "material",
 		                 Material{.diffuseMap = 0, .specularMap = 1, .shininess = 32});
