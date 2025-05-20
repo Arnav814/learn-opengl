@@ -56,7 +56,8 @@ int main(void) {
 	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
 	camera.setPosition(glm::vec3(0, 0, 3));
 
-	const glm::vec3 lightDir = glm::normalize(glm::vec3(0.1, -1, 0.1));
+	// const glm::vec3 lightDir = glm::normalize(glm::vec3(0.1, -1, 0.1));
+	const glm::vec3 lightPos = glm::normalize(glm::vec3(0.1, -1, 0.1));
 
 	// SHADERS
 
@@ -191,11 +192,14 @@ int main(void) {
 
 		objShader.setUniform("viewPos", camera.getPosition());
 		setStructUniform(objShader, "light",
-		                 DirectionalLight{
-		                     .direction = lightDir,
+		                 PointLight{
+		                     .position = lightPos,
 		                     .ambient = glm::vec3(.1),
 		                     .diffuse = glm::vec3(.5),
 		                     .specular = glm::vec3(.5),
+							 .constant = 1.0,
+							 .linear = 0.09,
+							 .quadratic = 0.032,
 		                 });
 		setStructUniform(objShader, "material",
 		                 Material{.diffuseMap = 0, .specularMap = 1, .shininess = 32});
@@ -216,8 +220,9 @@ int main(void) {
 
 		lightShader.use();
 		obj2world = glm::mat4(1);
-		obj2world = glm::translate(obj2world, -lightDir * 100.f);
-		obj2world = glm::scale(obj2world, glm::vec3(1));
+		// obj2world = glm::translate(obj2world, -lightDir * 100.f);
+		obj2world = glm::translate(obj2world, lightPos);
+		obj2world = glm::scale(obj2world, glm::vec3(0.2));
 		lightShader.setUniform("world2cam", camera.toCamSpace());
 		lightShader.setUniform("projection", camera.projectionMat());
 		lightShader.setUniform("obj2world", obj2world);

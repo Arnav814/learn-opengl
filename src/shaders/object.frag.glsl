@@ -7,9 +7,15 @@ out vec4 fragColor;
 
 struct PointLight {
 	vec3 position;
+
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
+
+	// for attenuation
+	float constant;
+	float linear;
+	float quadratic;
 };
 
 struct DirectionalLight {
@@ -26,7 +32,7 @@ struct Material {
 };
 
 uniform vec3 viewPos;
-uniform DirectionalLight light;
+uniform PointLight light;
 uniform Material material;
 
 void main() {
@@ -39,8 +45,8 @@ void main() {
 	// extra normal
 	vec3 unitNormal = normalize(normal);
 	// normalized vector from the light to the point being drawn
-	// vec3 lightDir = normalize(light.position - fragPos);
-	vec3 lightDir = normalize(-light.direction);
+	vec3 lightDir = normalize(light.position - fragPos);
+	// vec3 lightDir = normalize(-light.direction);
 	float diffuseIntensity = max(dot(unitNormal, lightDir), 0.0);
 	vec3 diffuse = light.diffuse * (diffuseIntensity * diffuseVal);
 
@@ -50,6 +56,14 @@ void main() {
 	vec3 reflectedDir = reflect(-lightDir, unitNormal);
 	float specularIntensity = pow(max(dot(reflectedDir, viewDir), 0.0), material.shininess);
 	vec3 specular = light.specular * (specularIntensity * specularVal);
+
+	// calculate attenuation
+	float lightDistance = length(light.position - fragPos);
+	float attenuation = 1.0 / (light.constant + light.linear * lightDistance
+	                           + light.quadratic * pow(lightDistance, 2));
+	ambient *= attenuation;
+	diffuse *= attenuation;
+	specular *= attenuation;
 
 	vec3 result = ambient + diffuse + specular;
 	fragColor = vec4(result, 1.0f);

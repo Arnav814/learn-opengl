@@ -28,9 +28,15 @@ inline void setStructUniform(ShaderProgram& shader, const std::string& uniformNa
 
 struct PointLight {
 	glm::vec3 position;
+
 	glm::vec3 ambient;
 	glm::vec3 diffuse;
 	glm::vec3 specular;
+
+	// for attenuation
+	float constant;
+	float linear;
+	float quadratic;
 };
 
 inline void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
@@ -39,6 +45,9 @@ inline void setStructUniform(ShaderProgram& shader, const std::string& uniformNa
 	SET_UNIFORM_ATTR(ambient);
 	SET_UNIFORM_ATTR(diffuse);
 	SET_UNIFORM_ATTR(specular);
+	SET_UNIFORM_ATTR(constant);
+	SET_UNIFORM_ATTR(linear);
+	SET_UNIFORM_ATTR(quadratic);
 }
 
 struct DirectionalLight {
