@@ -57,7 +57,7 @@ int main(void) {
 	camera.setPosition(glm::vec3(0, 0, 3));
 
 	// const glm::vec3 lightDir = glm::normalize(glm::vec3(0.1, -1, 0.1));
-	const glm::vec3 lightPos = glm::normalize(glm::vec3(0.1, -1, 0.1));
+	// const glm::vec3 lightPos = glm::normalize(glm::vec3(0.1, -1, 0.1));
 
 	// SHADERS
 
@@ -201,7 +201,8 @@ int main(void) {
 		                     .constant = 1.0,
 		                     .linear = 0.09,
 		                     .quadratic = 0.032,
-		                     .cutoff = glm::cos(glm::radians(12.5f)),
+		                     .inCutoff = glm::cos(glm::radians(12.5f)),
+		                     .outCuttof = glm::cos(glm::radians(17.5f)),
 		                 });
 		setStructUniform(objShader, "material",
 		                 Material{.diffuseMap = 0, .specularMap = 1, .shininess = 32});
@@ -220,19 +221,19 @@ int main(void) {
 		glBindVertexArray(0);
 		objShader.stopUsing();
 
-		lightShader.use();
-		obj2world = glm::mat4(1);
-		// obj2world = glm::translate(obj2world, -lightDir * 100.f);
-		obj2world = glm::translate(obj2world, lightPos);
-		obj2world = glm::scale(obj2world, glm::vec3(0.2));
-		lightShader.setUniform("world2cam", camera.toCamSpace());
-		lightShader.setUniform("projection", camera.projectionMat());
-		lightShader.setUniform("obj2world", obj2world);
-		lightShader.setUniform("lightColor", glm::vec3(1));
-		glBindVertexArray(lightVertAttribObj);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindVertexArray(0);
-		lightShader.stopUsing();
+		// lightShader.use();
+		// obj2world = glm::mat4(1);
+		// // obj2world = glm::translate(obj2world, -lightDir * 100.f);
+		// obj2world = glm::translate(obj2world, lightPos);
+		// obj2world = glm::scale(obj2world, glm::vec3(0.2));
+		// lightShader.setUniform("world2cam", camera.toCamSpace());
+		// lightShader.setUniform("projection", camera.projectionMat());
+		// lightShader.setUniform("obj2world", obj2world);
+		// lightShader.setUniform("lightColor", glm::vec3(1));
+		// glBindVertexArray(lightVertAttribObj);
+		// glDrawArrays(GL_TRIANGLES, 0, 36);
+		// glBindVertexArray(0);
+		// lightShader.stopUsing();
 
 		lastFrameTime = secsSinceInit;
 		SDL_GL_SwapWindow(window);

@@ -42,5 +42,6 @@ void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
 	SET_UNIFORM_ATTR(constant);
 	SET_UNIFORM_ATTR(linear);
 	SET_UNIFORM_ATTR(quadratic);
-	SET_UNIFORM_ATTR(cutoff);
+	SET_UNIFORM_ATTR(inCutoff);
+	SET_UNIFORM_ATTR(outCuttof);
 }

@@ -38,8 +38,10 @@ struct SpotLight {
 	float linear;
 	float quadratic;
 
-	// cos of the covered angle
-	float cutoff;
+	// cos of the inside cone's covered angle
+	float inCutoff;
+	// cos of the outside cone's covered angle
+	float outCuttof;
 };
 
 struct Material {
@@ -56,42 +58,45 @@ void main() {
 	vec3 diffuseVal = vec3(texture(material.diffuseMap, texCoord));
 	vec3 specularVal = vec3(texture(material.specularMap, texCoord));
 
+	vec3 ambient = light.ambient * diffuseVal;
+
+	// lighting calcs are done in world space
+	// normalized vector from the light to the point being drawn
+	vec3 lightDir = normalize(light.position - fragPos);
+	// extra normal
+	vec3 unitNormal = normalize(normal);
+	// vec3 lightDir = normalize(-light.direction);
+	float diffuseIntensity = max(dot(unitNormal, lightDir), 0.0);
+	vec3 diffuse = light.diffuse * (diffuseIntensity * diffuseVal);
+
+	// camera to drawn point
+	vec3 viewDir = normalize(viewPos - fragPos);
+	// exit vector of the reflected light
+	vec3 reflectedDir = reflect(-lightDir, unitNormal);
+	float specularIntensity = pow(max(dot(reflectedDir, viewDir), 0.0), material.shininess);
+	vec3 specular = light.specular * (specularIntensity * specularVal);
+
 	// calculate attenuation
 	float lightDistance = length(light.position - fragPos);
 	float attenuation = 1.0 / (light.constant + light.linear * lightDistance
 							   + light.quadratic * pow(lightDistance, 2));
 
-	// we always need ambient
-	vec3 ambient = light.ambient * diffuseVal;
 	ambient *= attenuation;
-	vec3 result = ambient;
+	diffuse *= attenuation;
+	specular *= attenuation;
 
-	// lighting calcs are done in world space
-
-	// normalized vector from the light to the point being drawn
-	vec3 lightDir = normalize(light.position - fragPos);
+	// calculate the cone of the spotlight
 	// angle between the light's direction and the light to current point vector
-	float theta = dot(normalize(lightDir), normalize(-light.direction));
+	float theta = dot(lightDir /* already normalized */, normalize(-light.direction));
+	// difference between the inside and outside cones
+	float epilson = light.inCutoff - light.outCuttof;
+	// final intensity value
+	float intensity = clamp((theta - light.outCuttof) / epilson, 0.0, 1.0);
 
-	// > not < because cosines
-	if (theta > light.cutoff) {
-		// extra normal
-		vec3 unitNormal = normalize(normal);
-		// vec3 lightDir = normalize(-light.direction);
-		float diffuseIntensity = max(dot(unitNormal, lightDir), 0.0);
-		vec3 diffuse = light.diffuse * (diffuseIntensity * diffuseVal);
+	// leave ambient unaffected so we have some light
+	diffuse *= intensity;
+	specular *= intensity;
 
-		// camera to drawn point
-		vec3 viewDir = normalize(viewPos - fragPos);
-		// exit vector of the reflected light
-		vec3 reflectedDir = reflect(-lightDir, unitNormal);
-		float specularIntensity = pow(max(dot(reflectedDir, viewDir), 0.0), material.shininess);
-		vec3 specular = light.specular * (specularIntensity * specularVal);
-
-		diffuse *= attenuation;
-		specular *= attenuation;
-		result += diffuse + specular;
-	}
-
+	vec3 result = ambient + diffuse + specular;
 	fragColor = vec4(result, 1.0f);
 } 

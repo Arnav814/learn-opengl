@@ -44,8 +44,10 @@ struct SpotLight {
 	float linear;
 	float quadratic;
 
-	// cos of the covered angle
-	float cutoff;
+	// cos of the inside cone's covered angle
+	float inCutoff;
+	// cos of the outside cone's covered angle
+	float outCuttof;
 };
 
 // these setters are decoupled from the actual shader class to make updating them easier
