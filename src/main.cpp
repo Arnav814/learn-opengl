@@ -61,21 +61,10 @@ int main(void) {
 
 	// SHADERS
 
-	const char objVertShaderSrc[] = {
-#embed "./shaders/object.vert.glsl"
-	    , 0};
-	const char lightVertShaderSrc[] = {
-#embed "./shaders/lightCube.vert.glsl"
-	    , 0};
-	const char objFragShaderSrc[] = {
-#embed "./shaders/object.frag.glsl"
-	    , 0};
-	const char lightFragShaderSrc[] = {
-#embed "./shaders/lightCube.frag.glsl"
-	    , 0};
-
-	ShaderProgram objShader{std::string(objVertShaderSrc), std::string(objFragShaderSrc)};
-	ShaderProgram lightShader{std::string(lightVertShaderSrc), std::string(lightFragShaderSrc)};
+	ShaderProgram objShader{SOURCE_DIR "./shaders/object.vert.glsl",
+	                        SOURCE_DIR "./shaders/object.frag.glsl"};
+	ShaderProgram lightShader{SOURCE_DIR "./shaders/lightCube.vert.glsl",
+	                          SOURCE_DIR "./shaders/lightCube.frag.glsl"};
 
 	// TEXTURES
 

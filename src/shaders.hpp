@@ -23,11 +23,8 @@
 
 #include <magic_enum/magic_enum.hpp>
 
-#include <exception>
-#include <format>
+#include <filesystem>
 #include <print>
-#include <regex>
-#include <sstream>
 #include <string>
 
 enum class ShaderType { vertexShader, geometryShader, fragmentShader };
@@ -36,10 +33,13 @@ class ShaderProgram {
   private:
 	uint shaderProgram;
 
-	uint compileShader(const std::string& source, ShaderType shaderType);
+	uint compileShader(const std::string& source, const filesystem::path& path,
+	                   ShaderType shaderType);
 
   public:
-	ShaderProgram(const std::string& vertexShaderSrc, const std::string& fragmentShaderSrc);
+	// paths are loaded at runtime, so must be relative to the binary (or absolute)
+	ShaderProgram(const filesystem::path& vertexShaderPath,
+	              const filesystem::path& fragmentShaderPath);
 
 	~ShaderProgram() { glDeleteProgram(this->shaderProgram); }
 

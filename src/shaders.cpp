@@ -5,7 +5,11 @@
 
 #include "common.hpp"
 
-//
+#include <filesystem>
+#include <fstream>
+#include <iterator>
+#include <regex>
+
 // converts an enum shader type to the appropriate opengl macro
 static uint enum2gl(ShaderType asEnum) {
 	switch (asEnum) {
@@ -16,10 +20,22 @@ static uint enum2gl(ShaderType asEnum) {
 	}
 }
 
-ShaderProgram::ShaderProgram(const std::string& vertexShaderSrc,
-                             const std::string& fragmentShaderSrc) {
-	uint vertexShader = this->compileShader(vertexShaderSrc, ShaderType::vertexShader);
-	uint fragmentShader = this->compileShader(fragmentShaderSrc, ShaderType::fragmentShader);
+static std::string readFile(const filesystem::path& path) {
+	std::ifstream asStream{path};
+	asStream.exceptions(std::ifstream::badbit);
+	std::string content{std::istreambuf_iterator<char>(asStream), std::istreambuf_iterator<char>()};
+	return content;
+}
+
+ShaderProgram::ShaderProgram(const filesystem::path& vertexShaderPath,
+                             const filesystem::path& fragmentShaderPath) {
+	std::string vertexShaderSrc = readFile(vertexShaderPath);
+	std::string fragmentShaderSrc = readFile(fragmentShaderPath);
+
+	uint vertexShader =
+	    this->compileShader(vertexShaderSrc, vertexShaderPath, ShaderType::vertexShader);
+	uint fragmentShader =
+	    this->compileShader(fragmentShaderSrc, vertexShaderPath, ShaderType::fragmentShader);
 
 	this->shaderProgram = glCreateProgram();
 	glAttachShader(this->shaderProgram, vertexShader);
@@ -30,9 +46,9 @@ ShaderProgram::ShaderProgram(const std::string& vertexShaderSrc,
 	if (not success) {
 		int length;
 		glGetProgramiv(this->shaderProgram, GL_INFO_LOG_LENGTH, &length);
-		char* infoLogPtr = (char*) malloc(sizeof(char) * length);
+		char* infoLogPtr = (char*)malloc(sizeof(char) * length);
 		glGetProgramInfoLog(this->shaderProgram, length, NULL, infoLogPtr);
-		std::string infoLog {infoLogPtr};
+		std::string infoLog{infoLogPtr};
 		free(infoLogPtr);
 
 		throw std::runtime_error(std::format("ERROR: failed to link shader program: {}.", infoLog));
@@ -42,7 +58,8 @@ ShaderProgram::ShaderProgram(const std::string& vertexShaderSrc,
 	glDeleteShader(fragmentShader);
 }
 
-uint ShaderProgram::compileShader(const std::string& source, ShaderType shaderType) {
+uint ShaderProgram::compileShader(const std::string& source, const filesystem::path& path,
+                                  ShaderType shaderType) {
 	auto asPtr = source.c_str();
 	uint shader = glCreateShader(enum2gl(shaderType));
 	glShaderSource(shader, 1, &asPtr, nullptr);
@@ -59,7 +76,8 @@ uint ShaderProgram::compileShader(const std::string& source, ShaderType shaderTy
 		std::string infoLogStr{infoLog};
 		free(infoLog);
 
-		std::println("Compiling {} failed: {}", magic_enum::enum_name(shaderType), infoLogStr);
+		std::println("Compiling {} at {} failed: {}", magic_enum::enum_name(shaderType),
+		             path.string(), infoLogStr);
 
 		// finds strings of the form "123(456)" and puts the
 		// first and second capture groups in two matches

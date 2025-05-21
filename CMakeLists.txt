@@ -62,6 +62,7 @@ add_executable(prog)
 target_compile_features(prog PRIVATE cxx_std_23)
 include("src/filelist.cmake")
 target_sources(prog PRIVATE ./glad/src/gl.c)
+target_compile_definitions(prog PRIVATE SOURCE_DIR="${CMAKE_SOURCE_DIR}/src/")
 
 target_include_directories(prog PRIVATE ./glad/include)
 target_link_libraries(prog PRIVATE SDL3::SDL3)
