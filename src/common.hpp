@@ -15,4 +15,8 @@ namespace filesystem {}
 
 namespace filesystem = std::filesystem;
 
+#define origin2d {0, 0}
+#define origin3d {0, 0, 0}
+#define origin4d {0, 0, 0, 0}
+
 #endif /* COMMON_HPP */

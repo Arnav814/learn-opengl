@@ -1,5 +1,6 @@
 #include "camera.hpp"
 #include "common.hpp"
+#include "lighting.hpp"
 #include "loadTexture.hpp"
 #include "shaders.hpp"
 #include "shaderStructs.hpp"
@@ -56,8 +57,42 @@ int main(void) {
 	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
 	camera.setPosition(glm::vec3(0, 0, 3));
 
-	// const glm::vec3 lightDir = glm::normalize(glm::vec3(0.1, -1, 0.1));
-	// const glm::vec3 lightPos = glm::normalize(glm::vec3(0.1, -1, 0.1));
+	const DirectionalLight dirLight{
+	    .direction = glm::normalize(glm::vec3(0.1, -1, 0.1)),
+	    .ambient = glm::vec3(.1),
+	    .diffuse = glm::vec3(.5),
+	    .specular = glm::vec3(.5),
+	};
+
+	std::vector<PointLight> pointLights{};
+	std::vector pointLightPositions = getPointLightPositions();
+	pointLights.reserve(pointLightPositions.size());
+	for (const glm::vec3& pos : pointLightPositions) {
+		pointLights.push_back(PointLight{
+		    .position = pos,
+		    .ambient = glm::vec3(.1),
+		    .diffuse = glm::vec3(.5),
+		    .specular = glm::vec3(.5),
+		    .constant = 1.0,
+		    .linear = 0.09,
+		    .quadratic = 0.032,
+		});
+	}
+
+	// translate to the appropriate position before use
+	const SpotLight baseSpotLight{
+	    .position = origin3d, // placeholder
+	    .direction = origin3d, // placeholder
+	    .ambient = glm::vec3(.1),
+	    .diffuse = glm::vec3(.5),
+	    .specular = glm::vec3(.5),
+	    .constant = 1.0,
+	    .linear = 0.09,
+	    .quadratic = 0.032,
+	    .inCutoff = glm::cos(glm::radians(12.5f)),
+	    .outCuttof = glm::cos(glm::radians(17.5f)),
+
+	};
 
 	// SHADERS
 
@@ -178,21 +213,20 @@ int main(void) {
 		objShader.use();
 		objShader.setUniform("world2cam", camera.toCamSpace());
 		objShader.setUniform("projection", camera.projectionMat());
-
 		objShader.setUniform("viewPos", camera.getPosition());
-		setStructUniform(objShader, "light",
-		                 SpotLight{
-		                     .position = camera.getPosition(),
-		                     .direction = camera.getFront(),
-		                     .ambient = glm::vec3(.1),
-		                     .diffuse = glm::vec3(.5),
-		                     .specular = glm::vec3(.5),
-		                     .constant = 1.0,
-		                     .linear = 0.09,
-		                     .quadratic = 0.032,
-		                     .inCutoff = glm::cos(glm::radians(12.5f)),
-		                     .outCuttof = glm::cos(glm::radians(17.5f)),
-		                 });
+
+		setStructUniform(objShader, "dirLight", dirLight);
+
+		for (uint i = 0; i < pointLights.size(); i++) {
+			setStructUniform(objShader, "pointLights", pointLights[i], i);
+		}
+
+		// move spotlight to camera to act as a flashlight
+		SpotLight flashlight = baseSpotLight;
+		flashlight.position = camera.getPosition();
+		flashlight.direction = camera.getFront();
+		setStructUniform(objShader, "spotLight", flashlight);
+
 		setStructUniform(objShader, "material",
 		                 Material{.diffuseMap = 0, .specularMap = 1, .shininess = 32});
 
@@ -210,19 +244,14 @@ int main(void) {
 		glBindVertexArray(0);
 		objShader.stopUsing();
 
-		// lightShader.use();
-		// obj2world = glm::mat4(1);
-		// // obj2world = glm::translate(obj2world, -lightDir * 100.f);
-		// obj2world = glm::translate(obj2world, lightPos);
-		// obj2world = glm::scale(obj2world, glm::vec3(0.2));
-		// lightShader.setUniform("world2cam", camera.toCamSpace());
-		// lightShader.setUniform("projection", camera.projectionMat());
-		// lightShader.setUniform("obj2world", obj2world);
-		// lightShader.setUniform("lightColor", glm::vec3(1));
-		// glBindVertexArray(lightVertAttribObj);
-		// glDrawArrays(GL_TRIANGLES, 0, 36);
-		// glBindVertexArray(0);
-		// lightShader.stopUsing();
+		for (uint i = 0; i < pointLights.size(); i++) {
+			renderLightCube(lightShader, camera, lightVertAttribObj, pointLights[i].position, 0.2,
+			                vizualizeLight(pointLights[i]));
+		}
+		// vizualize directional lights as a cube 100 units from the player's position
+		renderLightCube(lightShader, camera, lightVertAttribObj,
+		                -dirLight.direction * 100.f + camera.getPosition(), 1,
+		                vizualizeLight(dirLight));
 
 		lastFrameTime = secsSinceInit;
 		SDL_GL_SwapWindow(window);

@@ -3,18 +3,23 @@
 // makes writing shader setters easier
 #define SET_UNIFORM_ATTR(attr) \
 	do { \
-		shader.setUniform(uniformName + "." + #attr, value.attr); \
+		if (index == NOT_ARRAY) { \
+			shader.setUniform(uniformName + "." + #attr, value.attr); \
+		} else { \
+			shader.setUniform(uniformName + "[" + std::to_string(index) + "]." + #attr, \
+			                  value.attr); \
+		} \
 	} while (false)
 
-void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const Material& value) {
+void setStructUniform(ShaderProgram& shader, const std::string& uniformName, const Material& value,
+                      const int index) {
 	SET_UNIFORM_ATTR(diffuseMap);
 	SET_UNIFORM_ATTR(specularMap);
 	SET_UNIFORM_ATTR(shininess);
 }
 
 void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const DirectionalLight& value) {
+                      const DirectionalLight& value, const int index) {
 	SET_UNIFORM_ATTR(direction);
 	SET_UNIFORM_ATTR(ambient);
 	SET_UNIFORM_ATTR(diffuse);
@@ -22,7 +27,7 @@ void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
 }
 
 void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const PointLight& value) {
+                      const PointLight& value, const int index) {
 	SET_UNIFORM_ATTR(position);
 	SET_UNIFORM_ATTR(ambient);
 	SET_UNIFORM_ATTR(diffuse);
@@ -32,8 +37,8 @@ void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
 	SET_UNIFORM_ATTR(quadratic);
 }
 
-void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const SpotLight& value) {
+void setStructUniform(ShaderProgram& shader, const std::string& uniformName, const SpotLight& value,
+                      const int index) {
 	SET_UNIFORM_ATTR(position);
 	SET_UNIFORM_ATTR(direction);
 	SET_UNIFORM_ATTR(ambient);

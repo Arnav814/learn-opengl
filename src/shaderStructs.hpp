@@ -52,13 +52,16 @@ struct SpotLight {
 
 // these setters are decoupled from the actual shader class to make updating them easier
 
+// Specifies the value is not an array but a single value. For uniform setters.
+#define NOT_ARRAY -1
+
 void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const Material& value);
+                             const Material& value, const int index = NOT_ARRAY);
 void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const DirectionalLight& value);
+                             const DirectionalLight& value, const int index = NOT_ARRAY);
 void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const PointLight& value);
+                             const PointLight& value, const int index = NOT_ARRAY);
 void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const SpotLight& value);
+                             const SpotLight& value, const int index = NOT_ARRAY);
 
 #endif /* SHADERSTRUCTS_HPP */
