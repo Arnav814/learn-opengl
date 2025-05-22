@@ -27,6 +27,18 @@ CPMAddPackage(
 )
 
 CPMAddPackage(
+	NAME assimp
+	GITHUB_REPOSITORY "assimp/assimp"
+	GIT_TAG "v5.4.3"
+	EXCLUDE_FROM_ALL ON
+	SYSTEM ON
+	OPTIONS
+		"BUILD_SHARED_LIBS OFF"
+		"ASSIMP_BUILD_TESTS OFF"
+		"ASSIMP_INSTALL OFF"
+)
+
+CPMAddPackage(
 	NAME magic_enum
 	GITHUB_REPOSITORY "Neargye/magic_enum"
 	GIT_TAG "v0.9.7"
@@ -37,7 +49,7 @@ CPMAddPackage(
 CPMAddPackage(
 	NAME glm
 	GITHUB_REPOSITORY "g-truc/glm"
-	GIT_TAG 1.0.1
+	GIT_TAG "1.0.1"
 	EXCLUDE_FROM_ALL ON
 	SYSTEM ON
 	OPTIONS
@@ -64,8 +76,15 @@ include("src/filelist.cmake")
 target_sources(prog PRIVATE ./glad/src/gl.c)
 target_compile_definitions(prog PRIVATE SOURCE_DIR="${CMAKE_SOURCE_DIR}/src/")
 
+if (DEFINED MY_COMPILE_OPTS) # defined by CMakePresets.json sometimes
+	separate_arguments(MY_CXX_FLAGS UNIX_COMMAND ${MY_COMPILE_OPTS})
+	target_compile_options(prog PRIVATE ${MY_CXX_FLAGS})
+	target_link_options(prog PRIVATE ${MY_CXX_FLAGS})
+endif()
+
 target_include_directories(prog PRIVATE ./glad/include)
 target_link_libraries(prog PRIVATE SDL3::SDL3)
+target_link_libraries(prog PRIVATE assimp::assimp)
 target_link_libraries(prog PRIVATE magic_enum::magic_enum)
 target_link_libraries(prog PRIVATE glm::glm)
 target_link_libraries(prog PRIVATE stb)
