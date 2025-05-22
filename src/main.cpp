@@ -64,28 +64,16 @@ int main(void) {
 	    .specular = glm::vec3(.5),
 	};
 
-	std::vector<PointLight> pointLights{};
-	std::vector pointLightPositions = getPointLightPositions();
-	pointLights.reserve(pointLightPositions.size());
-	for (const glm::vec3& pos : pointLightPositions) {
-		pointLights.push_back(PointLight{
-		    .position = pos,
-		    .ambient = glm::vec3(.1),
-		    .diffuse = glm::vec3(.5),
-		    .specular = glm::vec3(.5),
-		    .constant = 1.0,
-		    .linear = 0.09,
-		    .quadratic = 0.032,
-		});
-	}
+	std::vector<PointLight> pointLights = getPointLights();
 
+	glm::vec3 spotLightColor = glm::vec3(1, 1, 0.8); // yellowish
 	// translate to the appropriate position before use
 	const SpotLight baseSpotLight{
 	    .position = origin3d, // placeholder
 	    .direction = origin3d, // placeholder
-	    .ambient = glm::vec3(.1),
-	    .diffuse = glm::vec3(.5),
-	    .specular = glm::vec3(.5),
+	    .ambient = spotLightColor * 0.1f,
+	    .diffuse = spotLightColor * 0.5f,
+	    .specular = spotLightColor * 0.5f,
 	    .constant = 1.0,
 	    .linear = 0.09,
 	    .quadratic = 0.032,
