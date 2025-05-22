@@ -4,7 +4,7 @@ layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoord;
 
 out vec3 fragPos;
-out vec3 normal;
+out vec3 inputNormal; // it's an input for the fragment shader
 out vec2 texCoord;
 
 uniform mat4 obj2world;
@@ -15,7 +15,7 @@ uniform mat4 projection;
 void main() {
 	gl_Position = projection * world2cam * obj2world * vec4(aPos, 1.0);
 	fragPos = vec3(obj2world * vec4(aPos, 1.0));
-	normal = obj2normal * aNormal;
+	inputNormal = obj2normal * aNormal;
 	texCoord = aTexCoord;
 }
 
