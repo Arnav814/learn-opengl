@@ -4,6 +4,7 @@
 target_sources(prog PRIVATE
 	"./src/camera.cpp"
 	"./src/main.cpp"
+	"./src/mesh.cpp"
 	"./src/shaders.cpp"
 	"./src/shaderStructs.cpp"
 	"./src/stbImageBuild.cpp"

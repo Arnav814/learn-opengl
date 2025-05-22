@@ -45,8 +45,13 @@ struct SpotLight {
 };
 
 struct Material {
-	sampler2D diffuseMap; // shared for ambient and diffuse
-	sampler2D specularMap;
+	// shared for ambient and diffuse
+	sampler2D textureDiffuse1;
+	sampler2D textureDiffuse2;
+	sampler2D textureDiffuse3;
+	sampler2D textureSpecular1;
+	sampler2D textureSpecular2;
+	sampler2D textureSpecular3;
 	float shininess; // specular exponent
 };
 

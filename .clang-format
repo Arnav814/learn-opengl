@@ -35,10 +35,12 @@ IncludeCategories:
     Priority: 5
   - Regex: '^<SDL3'
     Priority: 6
+  - Regex: '^<assimp'
+    Priority: 7
   - Regex: '^<magic_enum'
-    Priority: 7
+    Priority: 8
   - Regex: '^<stb'
-    Priority: 7
+    Priority: 9
   - Regex: '.*'
     Priority: 999
 

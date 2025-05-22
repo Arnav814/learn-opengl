@@ -19,4 +19,6 @@ namespace filesystem = std::filesystem;
 #define origin3d {0, 0, 0}
 #define origin4d {0, 0, 0, 0}
 
+#define VECTOR_SIZE_BYTES(vec) (vec.size() * sizeof(decltype(vec)::value_type))
+
 #endif /* COMMON_HPP */
