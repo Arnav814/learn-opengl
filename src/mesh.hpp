@@ -7,15 +7,10 @@
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
 
+#include <stb_image.h>
+
 #include <string>
 #include <vector>
-
-#define STRUCT_MEMBER_ATTRIB(attrNum, structName, member) \
-	do { \
-		glEnableVertexAttribArray(attrNum); \
-		glVertexAttribPointer(attrNum, sizeof(structName::member), GL_FLOAT, GL_FALSE, \
-		                      sizeof(structName), (void*)offsetof(structName, member)); \
-	} while (false)
 
 #pragma pack(push, 1)
 
@@ -33,6 +28,9 @@ struct Texture {
 };
 
 #pragma pack(pop)
+
+// loads the file at runtime, so the path should be absolute or relative to the final binary
+[[nodiscard]] uint loadTexture(const filesystem::path& path);
 
 class Mesh {
   private:

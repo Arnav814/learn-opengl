@@ -75,6 +75,7 @@ target_compile_features(prog PRIVATE cxx_std_23)
 include("src/filelist.cmake")
 target_sources(prog PRIVATE ./glad/src/gl.c)
 target_compile_definitions(prog PRIVATE SOURCE_DIR="${CMAKE_SOURCE_DIR}/src/")
+target_compile_definitions(prog PRIVATE MEDIA_DIR="${CMAKE_SOURCE_DIR}/media/")
 
 if (DEFINED MY_COMPILE_OPTS) # defined by CMakePresets.json sometimes
 	separate_arguments(MY_CXX_FLAGS UNIX_COMMAND ${MY_COMPILE_OPTS})

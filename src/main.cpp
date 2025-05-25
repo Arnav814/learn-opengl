@@ -2,6 +2,7 @@
 #include "common.hpp"
 #include "lighting.hpp"
 #include "loadTexture.hpp"
+#include "model.hpp"
 #include "shaders.hpp"
 #include "shaderStructs.hpp"
 #include "vertexData.hpp"
@@ -91,13 +92,10 @@ int main(void) {
 
 	// TEXTURES
 
-	uint diffuseTexId = loadTexture("../media/container2.jpg");
-	uint specularTexId = loadTexture("../media/container2_specular.png");
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, diffuseTexId);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, specularTexId);
+	std::print("Loading textures... ");
+	std::fflush(stdout);
+	Model backpack{MEDIA_DIR "./backpack/backpack.obj"};
+	std::println("Done.");
 
 	// CONTAINER BUFFERS
 
@@ -199,35 +197,38 @@ int main(void) {
 		glBindVertexArray(objVertAttribObj);
 
 		objShader.use();
+		objShader.setUniform("obj2world", glm::mat4(1));
+		objShader.setUniform("obj2normal", glm::mat4(1));
 		objShader.setUniform("world2cam", camera.toCamSpace());
 		objShader.setUniform("projection", camera.projectionMat());
-		objShader.setUniform("viewPos", camera.getPosition());
+		// objShader.setUniform("viewPos", camera.getPosition());
 
-		setStructUniform(objShader, "dirLight", dirLight);
+		// setStructUniform(objShader, "dirLight", dirLight);
 
-		for (uint i = 0; i < pointLights.size(); i++) {
-			setStructUniform(objShader, "pointLights", pointLights[i], i);
-		}
+		// for (uint i = 0; i < pointLights.size(); i++) {
+		// 	setStructUniform(objShader, "pointLights", pointLights[i], i);
+		// }
 
 		// move spotlight to camera to act as a flashlight
-		SpotLight flashlight = baseSpotLight;
-		flashlight.position = camera.getPosition();
-		flashlight.direction = camera.getFront();
-		setStructUniform(objShader, "spotLight", flashlight);
+		// SpotLight flashlight = baseSpotLight;
+		// flashlight.position = camera.getPosition();
+		// flashlight.direction = camera.getFront();
+		// setStructUniform(objShader, "spotLight", flashlight);
 
-		setStructUniform(objShader, "material",
-		                 Material{.diffuseMap = 0, .specularMap = 1, .shininess = 32});
+		// setStructUniform(objShader, "material",
+		//                  Material{.diffuseMap = 0, .specularMap = 1, .shininess = 32});
 
-		float angle = 0; // in radians
-		for (const glm::vec3& cubePos : cubePositions) {
-			obj2world = glm::mat4(1);
-			obj2world = glm::translate(obj2world, cubePos);
-			obj2world = glm::rotate(obj2world, angle, glm::normalize(glm::vec3(1, 2, 3)));
-			objShader.setUniform("obj2world", obj2world);
-			objShader.setUniform("obj2normal", glm::mat3(glm::transpose(glm::inverse(obj2world))));
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-			angle++;
-		}
+		// float angle = 0; // in radians
+		// for (const glm::vec3& cubePos : cubePositions) {
+		// 	obj2world = glm::mat4(1);
+		// 	obj2world = glm::translate(obj2world, cubePos);
+		// 	obj2world = glm::rotate(obj2world, angle, glm::normalize(glm::vec3(1, 2, 3)));
+		// 	objShader.setUniform("obj2world", obj2world);
+		// 	objShader.setUniform("obj2normal", glm::mat3(glm::transpose(glm::inverse(obj2world))));
+		// 	backpack.draw(objShader);
+		// 	angle++;
+		// }
+		backpack.draw(objShader);
 
 		glBindVertexArray(0);
 		objShader.stopUsing();
