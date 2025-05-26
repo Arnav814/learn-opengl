@@ -7,8 +7,6 @@
 
 std::vector<float> getVertexData();
 
-std::vector<glm::vec3> getCubePositions();
-
 std::vector<PointLight> getPointLights();
 
 #endif /* VERTEXDATA_HPP */

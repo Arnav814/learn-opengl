@@ -5,12 +5,6 @@
 
 #include <glm/vec3.hpp>
 
-struct Material {
-	int diffuseMap; // texture id
-	int specularMap; // texture id
-	float shininess; // specular exponent
-};
-
 struct DirectionalLight {
 	glm::vec3 direction;
 	glm::vec3 ambient;
@@ -55,8 +49,6 @@ struct SpotLight {
 // Specifies the value is not an array but a single value. For uniform setters.
 #define NOT_ARRAY -1
 
-void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const Material& value, const int index = NOT_ARRAY);
 void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
                              const DirectionalLight& value, const int index = NOT_ARRAY);
 void setStructUniform(ShaderProgram& shader, const std::string& uniformName,

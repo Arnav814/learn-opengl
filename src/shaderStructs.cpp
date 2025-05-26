@@ -11,13 +11,6 @@
 		} \
 	} while (false)
 
-void setStructUniform(ShaderProgram& shader, const std::string& uniformName, const Material& value,
-                      const int index) {
-	SET_UNIFORM_ATTR(diffuseMap);
-	SET_UNIFORM_ATTR(specularMap);
-	SET_UNIFORM_ATTR(shininess);
-}
-
 void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
                       const DirectionalLight& value, const int index) {
 	SET_UNIFORM_ATTR(direction);

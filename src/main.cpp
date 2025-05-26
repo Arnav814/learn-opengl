@@ -50,9 +50,6 @@ int main(void) {
 
 	// PERSPECTIVE
 
-	// updated in render loop
-	glm::mat4 obj2world = glm::mat4(1);
-
 	glEnable(GL_DEPTH_TEST);
 
 	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
@@ -85,56 +82,36 @@ int main(void) {
 
 	// SHADERS
 
+	std::print("Compiling shaders... ");
+	std::fflush(stdout);
 	ShaderProgram objShader{SOURCE_DIR "./shaders/object.vert.glsl",
 	                        SOURCE_DIR "./shaders/object.frag.glsl"};
 	ShaderProgram lightShader{SOURCE_DIR "./shaders/lightCube.vert.glsl",
 	                          SOURCE_DIR "./shaders/lightCube.frag.glsl"};
+	std::println("Done.");
 
-	// TEXTURES
+	// MODELS
 
-	std::print("Loading textures... ");
+	std::print("Loading models... ");
 	std::fflush(stdout);
 	Model backpack{MEDIA_DIR "./backpack/backpack.obj"};
 	std::println("Done.");
 
-	// CONTAINER BUFFERS
-
-	std::vector<float> verticies = getVertexData();
-	std::vector<glm::vec3> cubePositions = getCubePositions();
-
-	uint vertBufObj;
-	uint objVertAttribObj;
-	glGenVertexArrays(1, &objVertAttribObj);
-	glGenBuffers(1, &vertBufObj);
-	glBindVertexArray(objVertAttribObj);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertBufObj);
-	glBufferData(GL_ARRAY_BUFFER, verticies.size() * sizeof(float), verticies.data(),
-	             GL_STATIC_DRAW);
-
-	uint stepSize = (3 + 3 + 2) * sizeof(float);
-
-	// position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stepSize, (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// normals
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stepSize, (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	// texture coords
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stepSize, (void*)((3 + 3) * sizeof(float)));
-	glEnableVertexAttribArray(2);
-
 	// LIGHT BUFFERS
 
-	uint lightVertAttribObj;
-	glGenVertexArrays(1, &lightVertAttribObj);
-	glBindVertexArray(lightVertAttribObj);
-	glBindBuffer(GL_ARRAY_BUFFER, vertBufObj);
+	uint lightVBO;
+	glGenBuffers(1, &lightVBO);
+	uint lightVAO;
+	glGenVertexArrays(1, &lightVAO);
+	glBindVertexArray(lightVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
+
+	// populate
+	std::vector<float> verticies = getVertexData();
+	glBufferData(GL_ARRAY_BUFFER, VECTOR_SIZE_BYTES(verticies), verticies.data(), GL_STATIC_DRAW);
 
 	// only position
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stepSize, (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 	glEnableVertexAttribArray(0);
 
 	glBindVertexArray(0);
@@ -194,51 +171,39 @@ int main(void) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glClearColor(0.1, 0.1, 0.1, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glBindVertexArray(objVertAttribObj);
+		glBindVertexArray(lightVAO);
 
 		objShader.use();
 		objShader.setUniform("obj2world", glm::mat4(1));
-		objShader.setUniform("obj2normal", glm::mat4(1));
+		objShader.setUniform("obj2normal", glm::mat3(1));
 		objShader.setUniform("world2cam", camera.toCamSpace());
 		objShader.setUniform("projection", camera.projectionMat());
-		// objShader.setUniform("viewPos", camera.getPosition());
+		objShader.setUniform("viewPos", camera.getPosition());
 
-		// setStructUniform(objShader, "dirLight", dirLight);
+		setStructUniform(objShader, "dirLight", dirLight);
 
-		// for (uint i = 0; i < pointLights.size(); i++) {
-		// 	setStructUniform(objShader, "pointLights", pointLights[i], i);
-		// }
+		for (uint i = 0; i < pointLights.size(); i++) {
+			setStructUniform(objShader, "pointLights", pointLights[i], i);
+		}
 
 		// move spotlight to camera to act as a flashlight
-		// SpotLight flashlight = baseSpotLight;
-		// flashlight.position = camera.getPosition();
-		// flashlight.direction = camera.getFront();
-		// setStructUniform(objShader, "spotLight", flashlight);
+		SpotLight flashlight = baseSpotLight;
+		flashlight.position = camera.getPosition();
+		flashlight.direction = camera.getFront();
+		setStructUniform(objShader, "spotLight", flashlight);
 
-		// setStructUniform(objShader, "material",
-		//                  Material{.diffuseMap = 0, .specularMap = 1, .shininess = 32});
-
-		// float angle = 0; // in radians
-		// for (const glm::vec3& cubePos : cubePositions) {
-		// 	obj2world = glm::mat4(1);
-		// 	obj2world = glm::translate(obj2world, cubePos);
-		// 	obj2world = glm::rotate(obj2world, angle, glm::normalize(glm::vec3(1, 2, 3)));
-		// 	objShader.setUniform("obj2world", obj2world);
-		// 	objShader.setUniform("obj2normal", glm::mat3(glm::transpose(glm::inverse(obj2world))));
-		// 	backpack.draw(objShader);
-		// 	angle++;
-		// }
+		objShader.setUniform("material.shininess", 32.f); // TODO: don't hardcode
 		backpack.draw(objShader);
 
 		glBindVertexArray(0);
 		objShader.stopUsing();
 
 		for (uint i = 0; i < pointLights.size(); i++) {
-			renderLightCube(lightShader, camera, lightVertAttribObj, pointLights[i].position, 0.2,
+			renderLightCube(lightShader, camera, lightVAO, pointLights[i].position, 0.2,
 			                vizualizeLight(pointLights[i]));
 		}
 		// vizualize directional lights as a cube 100 units from the player's position
-		renderLightCube(lightShader, camera, lightVertAttribObj,
+		renderLightCube(lightShader, camera, lightVAO,
 		                -dirLight.direction * 100.f + camera.getPosition(), 1,
 		                vizualizeLight(dirLight));
 
@@ -247,8 +212,8 @@ int main(void) {
 		SDL_Delay(1'000 / 60);
 	}
 
-	glDeleteVertexArrays(1, &objVertAttribObj);
-	glDeleteBuffers(1, &vertBufObj);
+	glDeleteVertexArrays(1, &lightVAO);
+	glDeleteBuffers(1, &lightVBO);
 	objShader.~ShaderProgram();
 
 	SDL_GL_DestroyContext(context);

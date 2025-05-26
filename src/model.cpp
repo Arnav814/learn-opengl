@@ -28,7 +28,8 @@ void Model::loadModel(const filesystem::path& path) {
 	Assimp::Importer importer{};
 	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs
 	                                                   | aiProcess_JoinIdenticalVertices
-	                                                   | aiProcess_ValidateDataStructure);
+	                                                   | aiProcess_ValidateDataStructure
+													   | aiProcess_GenSmoothNormals);
 	// check for errors
 	if (not scene or scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE or not scene->mRootNode) {
 		throw std::runtime_error(std::format("Failed to load model at {}: {}", path.string(),
