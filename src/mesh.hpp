@@ -37,16 +37,19 @@ class Mesh {
 	std::vector<Vertex> verticies;
 	std::vector<uint> indicies;
 	std::vector<Texture> textures;
+	float shininess;
 	uint VAO, VBO, EBO;
 
 	// setup VAO, VB0, and EBO
 	void setupMesh();
 
   public:
-	Mesh(std::vector<Vertex> verticies, std::vector<uint> indicies, std::vector<Texture> textures) {
+	Mesh(std::vector<Vertex> verticies, std::vector<uint> indicies, std::vector<Texture> textures,
+	     float shininess) {
 		this->verticies = verticies;
 		this->indicies = indicies;
 		this->textures = textures;
+		this->shininess = shininess;
 
 		this->setupMesh();
 	}

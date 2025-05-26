@@ -49,6 +49,8 @@ void Mesh::draw(ShaderProgram& shader) {
 	}
 	glActiveTexture(GL_TEXTURE0);
 
+	shader.setUniform("material.shininess", this->shininess);
+
 	// actually draw mesh
 	glBindVertexArray(this->VAO);
 	glDrawElements(GL_TRIANGLES, (uint)this->indicies.size(), GL_UNSIGNED_INT, 0);

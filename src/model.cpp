@@ -57,6 +57,7 @@ Mesh Model::processMesh(const aiMesh* mesh, const aiScene* scene) {
 	std::vector<Vertex> verticies;
 	std::vector<uint> indicies;
 	std::vector<Texture> textures;
+	float shininess = 0;
 
 	verticies.reserve(mesh->mNumVertices);
 	for (uint i = 0; i < mesh->mNumVertices; i++) {
@@ -84,7 +85,9 @@ Mesh Model::processMesh(const aiMesh* mesh, const aiScene* scene) {
 		                     TextureType::textureDiffuse);
 		loadMaterialTextures(textures, this->directory, material, aiTextureType_SPECULAR,
 		                     TextureType::textureSpecular);
+		auto statusCode = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
+		if (statusCode != AI_SUCCESS) shininess = 32; // default value
 	}
 
-	return Mesh(verticies, indicies, textures);
+	return Mesh(verticies, indicies, textures, shininess);
 }

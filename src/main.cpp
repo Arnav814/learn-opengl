@@ -192,7 +192,6 @@ int main(void) {
 		flashlight.direction = camera.getFront();
 		setStructUniform(objShader, "spotLight", flashlight);
 
-		objShader.setUniform("material.shininess", 32.f); // TODO: don't hardcode
 		backpack.draw(objShader);
 
 		glBindVertexArray(0);
