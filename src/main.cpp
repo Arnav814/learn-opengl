@@ -35,7 +35,6 @@ int main(void) {
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 1);
 
 	SDL_Window* window =
 	    SDL_CreateWindow("[glad] GL with SDL", INIT_WIDTH, INIT_HEIGHT, SDL_WINDOW_OPENGL);
@@ -50,6 +49,8 @@ int main(void) {
 	glViewport(0, 0, INIT_WIDTH, INIT_HEIGHT);
 
 	// PERSPECTIVE
+
+	glEnable(GL_DEPTH_TEST);
 
 	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
 	camera.setPosition(glm::vec3(0, 0, 3));
@@ -85,8 +86,6 @@ int main(void) {
 	std::fflush(stdout);
 	ShaderProgram objShader{SOURCE_DIR "./shaders/object.vert.glsl",
 	                        SOURCE_DIR "./shaders/object.frag.glsl"};
-	ShaderProgram singleColorShader{SOURCE_DIR "./shaders/singleColor.vert.glsl",
-	                                SOURCE_DIR "./shaders/singleColor.frag.glsl"};
 	ShaderProgram lightShader{SOURCE_DIR "./shaders/lightCube.vert.glsl",
 	                          SOURCE_DIR "./shaders/lightCube.frag.glsl"};
 	std::println("Done.");
@@ -169,17 +168,14 @@ int main(void) {
 			glViewport(0, 0, width, height);
 		}
 
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_STENCIL_TEST);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glClearColor(0.1, 0.1, 0.1, 1.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBindVertexArray(lightVAO);
 
 		objShader.use();
-		glm::mat4 obj2world = glm::mat4(1);
-		objShader.setUniform("obj2world", obj2world);
-		objShader.setUniform("obj2normal", glm::transpose(glm::inverse(obj2world)));
+		objShader.setUniform("obj2world", glm::mat4(1));
+		objShader.setUniform("obj2normal", glm::mat3(1));
 		objShader.setUniform("world2cam", camera.toCamSpace());
 		objShader.setUniform("projection", camera.projectionMat());
 		objShader.setUniform("viewPos", camera.getPosition());
@@ -196,36 +192,10 @@ int main(void) {
 		flashlight.direction = camera.getFront();
 		setStructUniform(objShader, "spotLight", flashlight);
 
-		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-		glStencilFunc(GL_ALWAYS, 1, 0xFF);
-		glStencilMask(0xFF);
-
 		backpack.draw(objShader);
 
-		objShader.stopUsing();
-		singleColorShader.use();
-
-		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-		glDisable(GL_DEPTH_TEST);
-		glStencilMask(0x00);
-
-		// set uniforms
-		glm::mat4 borderObj2world = obj2world;
-		// enlarge object for borders
-		borderObj2world = glm::scale(borderObj2world, glm::vec3(1.1));
-		singleColorShader.setUniform("obj2world", borderObj2world);
-		singleColorShader.setUniform("world2cam", camera.toCamSpace());
-		singleColorShader.setUniform("projection", camera.projectionMat());
-		singleColorShader.setUniform("viewPos", camera.getPosition());
-		singleColorShader.setUniform("color", glm::vec3(0.4, 0.5, 0.6));
-
-		backpack.draw(singleColorShader);
-
-		glStencilMask(0xFF);
-		glStencilFunc(GL_ALWAYS, 1, 0xFF);
-		glEnable(GL_DEPTH_TEST);
 		glBindVertexArray(0);
-		singleColorShader.stopUsing();
+		objShader.stopUsing();
 
 		for (uint i = 0; i < pointLights.size(); i++) {
 			renderLightCube(lightShader, camera, lightVAO, pointLights[i].position, 0.2,
