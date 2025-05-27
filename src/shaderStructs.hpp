@@ -1,59 +1,28 @@
 #ifndef SHADERSTRUCTS_HPP
 #define SHADERSTRUCTS_HPP
 
-#include "shaders.hpp"
+// utilites for writing shader setters
 
-#include <glm/vec3.hpp>
+// for VAO attributes
+#define STRUCT_MEMBER_ATTRIB(attrNum, structName, member) \
+	do { \
+		glEnableVertexAttribArray(attrNum); \
+		glVertexAttribPointer(attrNum, sizeof(structName::member) / sizeof(float), GL_FLOAT, \
+		                      GL_FALSE, sizeof(structName), (void*)offsetof(structName, member)); \
+	} while (false)
 
-struct DirectionalLight {
-	glm::vec3 direction;
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
-	glm::vec3 specular;
-};
-
-struct PointLight {
-	glm::vec3 position;
-
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
-	glm::vec3 specular;
-
-	// for attenuation
-	float constant;
-	float linear;
-	float quadratic;
-};
-
-struct SpotLight {
-	glm::vec3 position;
-	glm::vec3 direction;
-
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
-	glm::vec3 specular;
-
-	// for attenuation
-	float constant;
-	float linear;
-	float quadratic;
-
-	// cos of the inside cone's covered angle
-	float inCutoff;
-	// cos of the outside cone's covered angle
-	float outCuttof;
-};
-
-// these setters are decoupled from the actual shader class to make updating them easier
+// makes writing shader setters easier
+#define SET_UNIFORM_ATTR(attr) \
+	do { \
+		if (index == NOT_ARRAY) { \
+			shader.setUniform(uniformName + "." + #attr, value.attr); \
+		} else { \
+			shader.setUniform(uniformName + "[" + std::to_string(index) + "]." + #attr, \
+			                  value.attr); \
+		} \
+	} while (false)
 
 // Specifies the value is not an array but a single value. For uniform setters.
 #define NOT_ARRAY -1
-
-void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const DirectionalLight& value, const int index = NOT_ARRAY);
-void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const PointLight& value, const int index = NOT_ARRAY);
-void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-                             const SpotLight& value, const int index = NOT_ARRAY);
 
 #endif /* SHADERSTRUCTS_HPP */

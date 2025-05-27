@@ -41,7 +41,7 @@ struct SpotLight {
 	// cos of the inside cone's covered angle
 	float inCutoff;
 	// cos of the outside cone's covered angle
-	float outCuttof;
+	float outCutoff;
 };
 
 struct Material {
@@ -168,9 +168,9 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec
 	// angle between the light's direction and the light to current point vector
 	float theta = dot(lightDir /* already normalized */, normalize(-light.direction));
 	// difference between the inside and outside cones
-	float epilson = light.inCutoff - light.outCuttof;
+	float epilson = light.inCutoff - light.outCutoff;
 	// final intensity value
-	float intensity = clamp((theta - light.outCuttof) / epilson, 0.0, 1.0);
+	float intensity = clamp((theta - light.outCutoff) / epilson, 0.0, 1.0);
 
 	// leave ambient unaffected so we have some light
 	diffuse *= intensity;

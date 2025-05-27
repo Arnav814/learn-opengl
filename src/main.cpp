@@ -55,11 +55,21 @@ int main(void) {
 	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
 	camera.setPosition(glm::vec3(0, 0, 3));
 
-	const DirectionalLight dirLight{
-	    .direction = glm::normalize(glm::vec3(0.1, -1, 0.1)),
+	LightComponents baseLightColor {
 	    .ambient = glm::vec3(.1),
 	    .diffuse = glm::vec3(.5),
 	    .specular = glm::vec3(.5),
+	};
+
+	AttenuationComponents baseAttenuation {
+	    .constant = 1.0,
+	    .linear = 0.09,
+	    .quadratic = 0.032,
+	};
+
+	const DirLight dirLight{
+	    .direction = glm::normalize(glm::vec3(0.1, -1, 0.1)),
+			.components = baseLightColor,
 	};
 
 	std::vector<PointLight> pointLights = getPointLights();
@@ -69,14 +79,10 @@ int main(void) {
 	const SpotLight baseSpotLight{
 	    .position = origin3d, // placeholder
 	    .direction = origin3d, // placeholder
-	    .ambient = spotLightColor * 0.1f,
-	    .diffuse = spotLightColor * 0.5f,
-	    .specular = spotLightColor * 0.5f,
-	    .constant = 1.0,
-	    .linear = 0.09,
-	    .quadratic = 0.032,
+		.components = baseLightColor * spotLightColor,
+		.attenuation = baseAttenuation,
 	    .inCutoff = glm::cos(glm::radians(12.5f)),
-	    .outCuttof = glm::cos(glm::radians(17.5f)),
+	    .outCutoff = glm::cos(glm::radians(17.5f)),
 
 	};
 
@@ -180,17 +186,17 @@ int main(void) {
 		objShader.setUniform("projection", camera.projectionMat());
 		objShader.setUniform("viewPos", camera.getPosition());
 
-		setStructUniform(objShader, "dirLight", dirLight);
+		dirLight.setStructUniform(objShader, "dirLight");
 
 		for (uint i = 0; i < pointLights.size(); i++) {
-			setStructUniform(objShader, "pointLights", pointLights[i], i);
+			pointLights[i].setStructUniform(objShader, "pointLights", i);
 		}
 
 		// move spotlight to camera to act as a flashlight
 		SpotLight flashlight = baseSpotLight;
 		flashlight.position = camera.getPosition();
 		flashlight.direction = camera.getFront();
-		setStructUniform(objShader, "spotLight", flashlight);
+		flashlight.setStructUniform(objShader, "spotLight");
 
 		backpack.draw(objShader);
 
@@ -198,13 +204,9 @@ int main(void) {
 		objShader.stopUsing();
 
 		for (uint i = 0; i < pointLights.size(); i++) {
-			renderLightCube(lightShader, camera, lightVAO, pointLights[i].position, 0.2,
-			                vizualizeLight(pointLights[i]));
+			pointLights[i].vizualize(lightShader, camera, lightVAO);
 		}
-		// vizualize directional lights as a cube 100 units from the player's position
-		renderLightCube(lightShader, camera, lightVAO,
-		                -dirLight.direction * 100.f + camera.getPosition(), 1,
-		                vizualizeLight(dirLight));
+		dirLight.vizualize(lightShader, camera, lightVAO);
 
 		lastFrameTime = secsSinceInit;
 		SDL_GL_SwapWindow(window);

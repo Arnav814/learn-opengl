@@ -1,5 +1,6 @@
 #ifndef VERTEXDATA_HPP
 #define VERTEXDATA_HPP
+#include "lighting.hpp"
 #include "shaderStructs.hpp"
 #include <glm/ext/vector_float3.hpp>
 

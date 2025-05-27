@@ -1,5 +1,7 @@
 #include "vertexData.hpp"
 
+#include "lighting.hpp"
+
 std::vector<float> getVertexData() {
 	std::vector<float> data{
 	    // clang-format off
@@ -51,9 +53,17 @@ std::vector<float> getVertexData() {
 }
 
 std::vector<PointLight> getPointLights() {
-	float baseAmbient = 0.1;
-	float baseDiffuse = 0.5;
-	float baseSpecular = 0.5;
+	LightComponents baseComponents{
+	    .ambient = glm::vec3(0.1),
+	    .diffuse = glm::vec3(0.5),
+	    .specular = glm::vec3(0.5),
+	};
+
+	AttenuationComponents baseAttenuation{
+	    .constant = 1,
+	    .linear = 0.09,
+	    .quadratic = 0.032,
+	};
 
 	std::vector<glm::vec3> colors{
 	    glm::vec3(1, 0.5, 0.5), //
@@ -74,12 +84,8 @@ std::vector<PointLight> getPointLights() {
 	for (uint i = 0; i < positions.size(); i++) {
 		data.push_back(PointLight{
 		    .position = positions[i],
-		    .ambient = colors[i] * baseAmbient,
-		    .diffuse = colors[i] * baseDiffuse,
-		    .specular = colors[i] * baseSpecular,
-		    .constant = 1,
-		    .linear = 0.09,
-		    .quadratic = 0.032,
+		    .components = baseComponents * colors[i],
+		    .attenuation = baseAttenuation,
 		});
 	}
 

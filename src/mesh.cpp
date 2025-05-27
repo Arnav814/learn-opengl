@@ -1,11 +1,5 @@
 #include "mesh.hpp"
-
-#define STRUCT_MEMBER_ATTRIB(attrNum, structName, member) \
-	do { \
-		glEnableVertexAttribArray(attrNum); \
-		glVertexAttribPointer(attrNum, sizeof(structName::member) / sizeof(float), GL_FLOAT, \
-		                      GL_FALSE, sizeof(structName), (void*)offsetof(structName, member)); \
-	} while (false)
+#include "shaderStructs.hpp"
 
 void Mesh::setupMesh() {
 	glGenVertexArrays(1, &this->VAO);
