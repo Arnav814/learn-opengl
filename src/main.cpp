@@ -50,6 +50,7 @@ int main(void) {
 
 	// PERSPECTIVE
 
+	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 
 	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
