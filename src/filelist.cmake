@@ -3,6 +3,7 @@
 
 target_sources(prog PRIVATE
 	"./src/camera.cpp"
+	"./src/genTerrain.cpp"
 	"./src/lighting.cpp"
 	"./src/main.cpp"
 	"./src/mesh.cpp"

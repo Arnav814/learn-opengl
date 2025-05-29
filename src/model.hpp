@@ -20,14 +20,14 @@ void loadMaterialTextures(std::vector<Texture>& textures, const filesystem::path
 
 class Model {
   private:
-	std::vector<Mesh> meshes;
+	std::vector<Mesh<TexVertex>> meshes;
 	filesystem::path directory;
 
 	void loadModel(const filesystem::path& path);
 
 	void processNode(const aiNode* node, const aiScene* scene);
 
-	Mesh processMesh(const aiMesh* mesh, const aiScene* scene);
+	Mesh<TexVertex> processMesh(const aiMesh* mesh, const aiScene* scene);
 
   public:
 	Model(const filesystem::path& path) {
@@ -36,7 +36,7 @@ class Model {
 	}
 
 	void draw(ShaderProgram& shader) {
-		for (Mesh& mesh : this->meshes) {
+		for (Mesh<TexVertex>& mesh : this->meshes) {
 			mesh.draw(shader);
 		}
 	}

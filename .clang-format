@@ -37,10 +37,17 @@ IncludeCategories:
     Priority: 6
   - Regex: '^<assimp'
     Priority: 7
-  - Regex: '^<magic_enum'
-    Priority: 8
+    # small libraries
   - Regex: '^<stb'
-    Priority: 9
+    Priority: 32
+    SortPriority: 32
+  - Regex: '^<magic_enum'
+    Priority: 32
+    SortPriority: 33
+  - Regex: '^<PerlinNoise'
+    Priority: 32
+    SortPriority: 34
+    # standard library
   - Regex: '.*'
     Priority: 999
 

@@ -1,7 +1,8 @@
 #include "mesh.hpp"
+
 #include "shaderStructs.hpp"
 
-void Mesh::setupMesh() {
+template <typename Vertex> void Mesh<Vertex>::setupMesh() {
 	glGenVertexArrays(1, &this->VAO);
 	glGenBuffers(1, &this->VBO);
 	glGenBuffers(1, &this->EBO);
@@ -17,31 +18,39 @@ void Mesh::setupMesh() {
 
 	STRUCT_MEMBER_ATTRIB(0, Vertex, position);
 	STRUCT_MEMBER_ATTRIB(1, Vertex, normal);
-	STRUCT_MEMBER_ATTRIB(2, Vertex, texCoords);
+	if constexpr (requires { Vertex::texCoords; }) {
+		STRUCT_MEMBER_ATTRIB(2, Vertex, texCoords);
+	} else if constexpr (requires { Vertex::color; }) {
+		STRUCT_MEMBER_ATTRIB(2, Vertex, color);
+	} else {
+		static_assert(false);
+	}
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void Mesh::draw(ShaderProgram& shader) {
-	// counters for number of diffuse/specular textures processed
-	uint diffuseN = 1;
-	uint specularN = 1;
+template <typename Vertex> void Mesh<Vertex>::draw(ShaderProgram& shader) {
+	if constexpr (requires { Vertex::texCoords; }) {
+		// counters for number of diffuse/specular textures processed
+		uint diffuseN = 1;
+		uint specularN = 1;
 
-	// loop through textures and set uniforms
-	for (uint i = 0; i < textures.size(); i++) {
-		glActiveTexture(GL_TEXTURE0 + i);
-		std::string number; // texture to use
-		TextureType texType = textures[i].type;
-		if (texType == TextureType::textureDiffuse) number = std::to_string(diffuseN++);
-		else if (texType == TextureType::textureSpecular) number = std::to_string(specularN++);
+		// loop through textures and set uniforms
+		for (uint i = 0; i < textures.size(); i++) {
+			glActiveTexture(GL_TEXTURE0 + i);
+			std::string number; // texture to use
+			TextureType texType = textures[i].type;
+			if (texType == TextureType::textureDiffuse) number = std::to_string(diffuseN++);
+			else if (texType == TextureType::textureSpecular) number = std::to_string(specularN++);
 
-		shader.setUniform("material." + std::string(magic_enum::enum_name(texType)) + number,
-		                  (int)i);
-		glBindTexture(GL_TEXTURE_2D, textures[i].id);
+			shader.setUniform("material." + std::string(magic_enum::enum_name(texType)) + number,
+			                  (int)i);
+			glBindTexture(GL_TEXTURE_2D, textures[i].id);
+		}
+		glActiveTexture(GL_TEXTURE0);
 	}
-	glActiveTexture(GL_TEXTURE0);
 
 	shader.setUniform("material.shininess", this->shininess);
 
@@ -74,3 +83,6 @@ uint loadTexture(const filesystem::path& path) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return texture;
 }
+
+template class Mesh<TexVertex>;
+template class Mesh<ColorVertex>;

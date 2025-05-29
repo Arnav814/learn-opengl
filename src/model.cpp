@@ -53,8 +53,8 @@ void Model::processNode(const aiNode* node, const aiScene* scene) {
 	}
 }
 
-Mesh Model::processMesh(const aiMesh* mesh, const aiScene* scene) {
-	std::vector<Vertex> verticies;
+Mesh<TexVertex> Model::processMesh(const aiMesh* mesh, const aiScene* scene) {
+	std::vector<TexVertex> verticies;
 	std::vector<uint> indicies;
 	std::vector<Texture> textures;
 	float shininess = 0;
@@ -62,7 +62,7 @@ Mesh Model::processMesh(const aiMesh* mesh, const aiScene* scene) {
 	verticies.reserve(mesh->mNumVertices);
 	for (uint i = 0; i < mesh->mNumVertices; i++) {
 		// setup vertex
-		Vertex vertex{};
+		TexVertex vertex{};
 		vertex.position = toGlm(mesh->mVertices[i]);
 		vertex.normal = toGlm(mesh->mNormals[i]);
 		if (mesh->mTextureCoords[0]) vertex.texCoords = toGlm(mesh->mTextureCoords[0][i]);

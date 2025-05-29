@@ -57,6 +57,19 @@ CPMAddPackage(
 )
 
 CPMAddPackage(
+	NAME Boost
+	VERSION "1.88.0"
+	# cloning is slow
+	URL "https://github.com/boostorg/boost/releases/download/boost-1.88.0/boost-1.88.0-cmake.tar.xz"
+	URL_HASH SHA256=f48b48390380cfb94a629872346e3a81370dc498896f16019ade727ab72eb1ec
+	OPTIONS
+		"BOOST_ENABLE_CMAKE ON"
+		"BOOST_SKIP_INSTALL_RULES ON"
+		"BUILD_SHARED_LIBS OFF"
+		"BOOST_INCLUDE_LIBRARIES multi_array"
+)
+
+CPMAddPackage(
 	NAME stb
 	GITHUB_REPOSITORY "nothings/stb"
 	VERSION 2.30 # version for stb_image.h: all of them have different versions
@@ -70,12 +83,27 @@ if (stb_ADDED)
 	target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
 endif()
 
+CPMAddPackage(
+	NAME PerlinNoise
+	GITHUB_REPOSITORY "Reputeless/PerlinNoise"
+	GIT_TAG "v3.0.0"
+	EXCLUDE_FROM_ALL ON
+	SYSTEM ON
+)
+
+if (PerlinNoise_ADDED)
+	add_library(PerlinNoise INTERFACE IMPORTED)
+	target_include_directories(PerlinNoise INTERFACE ${PerlinNoise_SOURCE_DIR})
+endif()
+
 add_executable(prog)
 target_compile_features(prog PRIVATE cxx_std_23)
 include("src/filelist.cmake")
 target_sources(prog PRIVATE ./glad/src/gl.c)
+
 target_compile_definitions(prog PRIVATE SOURCE_DIR="${CMAKE_SOURCE_DIR}/src/")
 target_compile_definitions(prog PRIVATE MEDIA_DIR="${CMAKE_SOURCE_DIR}/media/")
+target_compile_definitions(prog PRIVATE GLM_ENABLE_EXPERIMENTAL)
 
 if (DEFINED MY_COMPILE_OPTS) # defined by CMakePresets.json sometimes
 	separate_arguments(MY_CXX_FLAGS UNIX_COMMAND ${MY_COMPILE_OPTS})
@@ -88,5 +116,7 @@ target_link_libraries(prog PRIVATE SDL3::SDL3)
 target_link_libraries(prog PRIVATE assimp::assimp)
 target_link_libraries(prog PRIVATE magic_enum::magic_enum)
 target_link_libraries(prog PRIVATE glm::glm)
+target_link_libraries(prog PRIVATE Boost::multi_array)
 target_link_libraries(prog PRIVATE stb)
+target_link_libraries(prog PRIVATE PerlinNoise)
 

@@ -1,5 +1,6 @@
 #include "camera.hpp"
 #include "common.hpp"
+#include "genTerrain.hpp"
 #include "lighting.hpp"
 #include "loadTexture.hpp"
 #include "model.hpp"
@@ -59,13 +60,13 @@ int main(void) {
 	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
 	camera.setPosition(glm::vec3(0, 0, 3));
 
-	LightComponents baseLightColor {
+	LightComponents baseLightColor{
 	    .ambient = glm::vec3(.1),
 	    .diffuse = glm::vec3(.5),
 	    .specular = glm::vec3(.5),
 	};
 
-	AttenuationComponents baseAttenuation {
+	AttenuationComponents baseAttenuation{
 	    .constant = 1.0,
 	    .linear = 0.09,
 	    .quadratic = 0.032,
@@ -73,7 +74,7 @@ int main(void) {
 
 	const DirLight dirLight{
 	    .direction = glm::normalize(glm::vec3(0.1, -1, 0.1)),
-			.components = baseLightColor,
+	    .components = baseLightColor,
 	};
 
 	std::vector<PointLight> pointLights = getPointLights();
@@ -83,8 +84,8 @@ int main(void) {
 	const SpotLight baseSpotLight{
 	    .position = origin3d, // placeholder
 	    .direction = origin3d, // placeholder
-		.components = baseLightColor * spotLightColor,
-		.attenuation = baseAttenuation,
+	    .components = baseLightColor * spotLightColor,
+	    .attenuation = baseAttenuation,
 	    .inCutoff = glm::cos(glm::radians(12.5f)),
 	    .outCutoff = glm::cos(glm::radians(17.5f)),
 
@@ -96,6 +97,8 @@ int main(void) {
 	std::fflush(stdout);
 	ShaderProgram objShader{SOURCE_DIR "./shaders/object.vert.glsl",
 	                        SOURCE_DIR "./shaders/object.frag.glsl"};
+	ShaderProgram terrainShader{SOURCE_DIR "./shaders/terrain.vert.glsl",
+	                            SOURCE_DIR "./shaders/terrain.frag.glsl"};
 	ShaderProgram lightShader{SOURCE_DIR "./shaders/lightCube.vert.glsl",
 	                          SOURCE_DIR "./shaders/lightCube.frag.glsl"};
 	std::println("Done.");
@@ -105,6 +108,16 @@ int main(void) {
 	std::print("Loading models... ");
 	std::fflush(stdout);
 	Model backpack{MEDIA_DIR "./backpack/backpack.obj"};
+	std::println("Done.");
+
+	// TERRAIN
+
+	std::print("Generating terrain... ");
+	std::fflush(stdout);
+	GenTerrain getTerrain{
+	    123'123,        32, glm::vec3(0.96, 0.84, 0.69), glm::vec3(0.25, 0.60, 0.04), glm::vec2(50),
+	    glm::ivec2(250)};
+	Mesh terrain = getTerrain.getTerrain();
 	std::println("Done.");
 
 	// LIGHT BUFFERS
@@ -203,6 +216,29 @@ int main(void) {
 		flashlight.setStructUniform(objShader, "spotLight");
 
 		backpack.draw(objShader);
+
+		{ // TODO: abstract out
+			terrainShader.use();
+			terrainShader.setUniform("obj2world", glm::mat4(1));
+			terrainShader.setUniform("obj2normal", glm::mat3(1));
+			terrainShader.setUniform("world2cam", camera.toCamSpace());
+			terrainShader.setUniform("projection", camera.projectionMat());
+			terrainShader.setUniform("viewPos", camera.getPosition());
+
+			dirLight.setStructUniform(terrainShader, "dirLight");
+
+			for (uint i = 0; i < pointLights.size(); i++) {
+				pointLights[i].setStructUniform(terrainShader, "pointLights", i);
+			}
+
+			// move spotlight to camera to act as a flashlight
+			SpotLight flashlight = baseSpotLight;
+			flashlight.position = camera.getPosition();
+			flashlight.direction = camera.getFront();
+			flashlight.setStructUniform(terrainShader, "spotLight");
+
+			terrain.draw(terrainShader);
+		}
 
 		glBindVertexArray(0);
 		objShader.stopUsing();
