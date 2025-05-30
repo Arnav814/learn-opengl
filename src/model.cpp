@@ -89,5 +89,5 @@ Mesh<TexVertex> Model::processMesh(const aiMesh* mesh, const aiScene* scene) {
 		if (statusCode != AI_SUCCESS) shininess = 32; // default value
 	}
 
-	return Mesh(verticies, indicies, textures, shininess);
+	return Mesh(verticies, indicies, textures, shininess, this->shader);
 }

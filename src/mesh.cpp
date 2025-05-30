@@ -31,7 +31,7 @@ template <typename Vertex> void Mesh<Vertex>::setupMesh() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-template <typename Vertex> void Mesh<Vertex>::draw(ShaderProgram& shader) {
+template <typename Vertex> void Mesh<Vertex>::draw() {
 	if constexpr (requires { Vertex::texCoords; }) {
 		// counters for number of diffuse/specular textures processed
 		uint diffuseN = 1;
@@ -45,14 +45,14 @@ template <typename Vertex> void Mesh<Vertex>::draw(ShaderProgram& shader) {
 			if (texType == TextureType::textureDiffuse) number = std::to_string(diffuseN++);
 			else if (texType == TextureType::textureSpecular) number = std::to_string(specularN++);
 
-			shader.setUniform("material." + std::string(magic_enum::enum_name(texType)) + number,
+			this->shader->setUniform("material." + std::string(magic_enum::enum_name(texType)) + number,
 			                  (int)i);
 			glBindTexture(GL_TEXTURE_2D, textures[i].id);
 		}
 		glActiveTexture(GL_TEXTURE0);
 	}
 
-	shader.setUniform("material.shininess", this->shininess);
+	this->shader->setUniform("material.shininess", this->shininess);
 
 	// actually draw mesh
 	glBindVertexArray(this->VAO);

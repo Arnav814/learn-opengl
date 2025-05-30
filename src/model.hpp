@@ -22,6 +22,7 @@ class Model {
   private:
 	std::vector<Mesh<TexVertex>> meshes;
 	filesystem::path directory;
+	std::shared_ptr<ShaderProgram> shader; // the shader to draw this model with
 
 	void loadModel(const filesystem::path& path);
 
@@ -30,14 +31,16 @@ class Model {
 	Mesh<TexVertex> processMesh(const aiMesh* mesh, const aiScene* scene);
 
   public:
-	Model(const filesystem::path& path) {
+	Model(const filesystem::path& path, const std::shared_ptr<ShaderProgram> shader) {
+		this->shader = shader;
 		this->directory = path.parent_path();
 		this->loadModel(path);
 	}
 
-	void draw(ShaderProgram& shader) {
+	void draw() {
+		this->shader->use();
 		for (Mesh<TexVertex>& mesh : this->meshes) {
-			mesh.draw(shader);
+			mesh.draw();
 		}
 	}
 };

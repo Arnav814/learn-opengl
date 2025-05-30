@@ -28,7 +28,8 @@ static std::string readFile(const filesystem::path& path) {
 }
 
 ShaderProgram::ShaderProgram(const filesystem::path& vertexShaderPath,
-                             const filesystem::path& fragmentShaderPath) {
+                             const filesystem::path& fragmentShaderPath,
+                             const PrivateObj obj [[maybe_unused]]) {
 	std::string vertexShaderSrc = readFile(vertexShaderPath);
 	std::string fragmentShaderSrc = readFile(fragmentShaderPath);
 

@@ -2,10 +2,8 @@
 #include "common.hpp"
 #include "genTerrain.hpp"
 #include "lighting.hpp"
-#include "loadTexture.hpp"
 #include "model.hpp"
 #include "shaders.hpp"
-#include "shaderStructs.hpp"
 #include "vertexData.hpp"
 
 #include <glad/gl.h>
@@ -95,28 +93,32 @@ int main(void) {
 
 	std::print("Compiling shaders... ");
 	std::fflush(stdout);
-	ShaderProgram objShader{SOURCE_DIR "./shaders/object.vert.glsl",
-	                        SOURCE_DIR "./shaders/object.frag.glsl"};
-	ShaderProgram terrainShader{SOURCE_DIR "./shaders/terrain.vert.glsl",
-	                            SOURCE_DIR "./shaders/terrain.frag.glsl"};
-	ShaderProgram lightShader{SOURCE_DIR "./shaders/lightCube.vert.glsl",
-	                          SOURCE_DIR "./shaders/lightCube.frag.glsl"};
+	std::shared_ptr objShader = ShaderProgram::make(SOURCE_DIR "./shaders/object.vert.glsl",
+	                                                SOURCE_DIR "./shaders/object.frag.glsl");
+	std::shared_ptr terrainShader = ShaderProgram::make(SOURCE_DIR "./shaders/terrain.vert.glsl",
+	                                                    SOURCE_DIR "./shaders/terrain.frag.glsl");
+	std::shared_ptr lightShader = ShaderProgram::make(SOURCE_DIR "./shaders/lightCube.vert.glsl",
+	                                                  SOURCE_DIR "./shaders/lightCube.frag.glsl");
 	std::println("Done.");
 
 	// MODELS
 
 	std::print("Loading models... ");
 	std::fflush(stdout);
-	Model backpack{MEDIA_DIR "./backpack/backpack.obj"};
+	Model backpack{MEDIA_DIR "./backpack/backpack.obj", objShader};
 	std::println("Done.");
 
 	// TERRAIN
 
 	std::print("Generating terrain... ");
 	std::fflush(stdout);
-	GenTerrain getTerrain{
-	    123'123,        32, glm::vec3(0.96, 0.84, 0.69), glm::vec3(0.25, 0.60, 0.04), glm::vec2(50),
-	    glm::ivec2(250)};
+	GenTerrain getTerrain{123'123,
+	                      32,
+	                      glm::vec3(0.96, 0.84, 0.69),
+	                      glm::vec3(0.25, 0.60, 0.04),
+	                      glm::vec2(50),
+	                      glm::ivec2(250),
+	                      terrainShader};
 	Mesh terrain = getTerrain.getTerrain();
 	std::println("Done.");
 
@@ -196,57 +198,57 @@ int main(void) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBindVertexArray(lightVAO);
 
-		objShader.use();
-		objShader.setUniform("obj2world", glm::mat4(1));
-		objShader.setUniform("obj2normal", glm::mat3(1));
-		objShader.setUniform("world2cam", camera.toCamSpace());
-		objShader.setUniform("projection", camera.projectionMat());
-		objShader.setUniform("viewPos", camera.getPosition());
+		objShader->use();
+		objShader->setUniform("obj2world", glm::mat4(1));
+		objShader->setUniform("obj2normal", glm::mat3(1));
+		objShader->setUniform("world2cam", camera.toCamSpace());
+		objShader->setUniform("projection", camera.projectionMat());
+		objShader->setUniform("viewPos", camera.getPosition());
 
-		dirLight.setStructUniform(objShader, "dirLight");
+		dirLight.setStructUniform(*objShader, "dirLight");
 
 		for (uint i = 0; i < pointLights.size(); i++) {
-			pointLights[i].setStructUniform(objShader, "pointLights", i);
+			pointLights[i].setStructUniform(*objShader, "pointLights", i);
 		}
 
 		// move spotlight to camera to act as a flashlight
 		SpotLight flashlight = baseSpotLight;
 		flashlight.position = camera.getPosition();
 		flashlight.direction = camera.getFront();
-		flashlight.setStructUniform(objShader, "spotLight");
+		flashlight.setStructUniform(*objShader, "spotLight");
 
-		backpack.draw(objShader);
+		backpack.draw();
 
 		{ // TODO: abstract out
-			terrainShader.use();
-			terrainShader.setUniform("obj2world", glm::mat4(1));
-			terrainShader.setUniform("obj2normal", glm::mat3(1));
-			terrainShader.setUniform("world2cam", camera.toCamSpace());
-			terrainShader.setUniform("projection", camera.projectionMat());
-			terrainShader.setUniform("viewPos", camera.getPosition());
+			terrainShader->use();
+			terrainShader->setUniform("obj2world", glm::mat4(1));
+			terrainShader->setUniform("obj2normal", glm::mat3(1));
+			terrainShader->setUniform("world2cam", camera.toCamSpace());
+			terrainShader->setUniform("projection", camera.projectionMat());
+			terrainShader->setUniform("viewPos", camera.getPosition());
 
-			dirLight.setStructUniform(terrainShader, "dirLight");
+			dirLight.setStructUniform(*terrainShader, "dirLight");
 
 			for (uint i = 0; i < pointLights.size(); i++) {
-				pointLights[i].setStructUniform(terrainShader, "pointLights", i);
+				pointLights[i].setStructUniform(*terrainShader, "pointLights", i);
 			}
 
 			// move spotlight to camera to act as a flashlight
 			SpotLight flashlight = baseSpotLight;
 			flashlight.position = camera.getPosition();
 			flashlight.direction = camera.getFront();
-			flashlight.setStructUniform(terrainShader, "spotLight");
+			flashlight.setStructUniform(*terrainShader, "spotLight");
 
-			terrain.draw(terrainShader);
+			terrain.draw();
 		}
 
 		glBindVertexArray(0);
-		objShader.stopUsing();
+		objShader->stopUsing();
 
 		for (uint i = 0; i < pointLights.size(); i++) {
-			pointLights[i].vizualize(lightShader, camera, lightVAO);
+			pointLights[i].vizualize(*lightShader, camera, lightVAO);
 		}
-		dirLight.vizualize(lightShader, camera, lightVAO);
+		dirLight.vizualize(*lightShader, camera, lightVAO);
 
 		lastFrameTime = secsSinceInit;
 		SDL_GL_SwapWindow(window);
@@ -255,7 +257,6 @@ int main(void) {
 
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &lightVBO);
-	objShader.~ShaderProgram();
 
 	SDL_GL_DestroyContext(context);
 	SDL_DestroyWindow(window);

@@ -24,22 +24,41 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include <filesystem>
+#include <memory>
 #include <print>
 #include <string>
 
 enum class ShaderType { vertexShader, geometryShader, fragmentShader };
 
-class ShaderProgram {
+class ShaderProgram : public std::enable_shared_from_this<ShaderProgram> {
   private:
 	uint shaderProgram;
 
 	uint compileShader(const std::string& source, const filesystem::path& path,
 	                   ShaderType shaderType);
 
+	// Keep the constructor private. I can't just mark it private because that causes errors when
+	// std::shared_ptr tries calling said constructor.
+	struct PrivateObj {};
+
+	// Copying would break the RAII-based cleanup system. In other words, incorectly calling the
+	// destructor would delete the underlying glShaderProgram too early.
+	ShaderProgram(const ShaderProgram&) = delete;
+	ShaderProgram& operator=(const ShaderProgram&) = delete;
+
   public:
-	// paths are loaded at runtime, so must be relative to the binary (or absolute)
+	// only instantiateable as a shared pointer
 	ShaderProgram(const filesystem::path& vertexShaderPath,
-	              const filesystem::path& fragmentShaderPath);
+	              const filesystem::path& fragmentShaderPath, const PrivateObj obj);
+
+	// paths are loaded at runtime, so must be relative to the binary (or absolute)
+	static std::shared_ptr<ShaderProgram> make(const filesystem::path& vertexShaderPath,
+	                                           const filesystem::path& fragmentShaderPath) {
+		return std::make_shared<ShaderProgram>(vertexShaderPath, fragmentShaderPath, PrivateObj{});
+	}
+
+	// get a new pointer to this object
+	std::shared_ptr<ShaderProgram> getptr() { return shared_from_this(); }
 
 	~ShaderProgram() { glDeleteProgram(this->shaderProgram); }
 

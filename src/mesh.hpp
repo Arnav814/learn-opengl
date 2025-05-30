@@ -47,31 +47,35 @@ template <typename Vertex> class Mesh {
 	std::vector<Texture> textures; // TODO: this is useless if we aren't using textured verticies
 	float shininess;
 	uint VAO, VBO, EBO;
+	std::shared_ptr<ShaderProgram> shader;
 
 	// setup VAO, VB0, and EBO
 	void setupMesh();
 
   public:
 	Mesh<TexVertex>(const std::vector<Vertex>& verticies, const std::vector<uint>& indicies,
-	                const std::vector<Texture>& textures, const float shininess) {
+	                const std::vector<Texture>& textures, const float shininess,
+	                const std::shared_ptr<ShaderProgram> shader) {
 		this->verticies = verticies;
 		this->indicies = indicies;
 		this->textures = textures;
 		this->shininess = shininess;
+		this->shader = shader;
 
 		this->setupMesh();
 	}
 
 	Mesh<ColorVertex>(const std::vector<Vertex>& verticies, const std::vector<uint>& indicies,
-	                  const float shininess) {
+	                  const float shininess, const std::shared_ptr<ShaderProgram> shader) {
 		this->verticies = verticies;
 		this->indicies = indicies;
 		this->shininess = shininess;
+		this->shader = shader;
 
 		this->setupMesh();
 	}
 
-	void draw(ShaderProgram& shader);
+	void draw();
 };
 
 #endif /* MESH_HPP */

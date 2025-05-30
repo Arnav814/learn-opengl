@@ -80,5 +80,5 @@ Mesh<ColorVertex> GenTerrain::getTerrain() {
 		}
 	}
 
-	return Mesh<ColorVertex>{verticies, indicies, this->shininess};
+	return Mesh<ColorVertex>{verticies, indicies, this->shininess, this->shader};
 }

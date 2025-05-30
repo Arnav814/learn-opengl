@@ -12,6 +12,7 @@
 #include <PerlinNoise.hpp>
 
 #include <limits>
+#include <memory>
 
 class GenTerrain {
   private:
@@ -22,6 +23,7 @@ class GenTerrain {
 	glm::vec2 size;
 	glm::uvec2 samples;
 	siv::PerlinNoise noise;
+	std::shared_ptr<ShaderProgram> shader;
 
 	// flatten a 2d coordinate into a 1d index
 	// row major
@@ -34,8 +36,9 @@ class GenTerrain {
 	                        const float fallback = std::numeric_limits<float>::quiet_NaN());
 
   public:
-	GenTerrain(ulong seed, float shininess, glm::vec3 bottomColor, glm::vec3 topColor,
-	           glm::vec2 size, glm::uvec2 samples) {
+	GenTerrain(const ulong& seed, const float& shininess, const glm::vec3& bottomColor,
+	           const glm::vec3& topColor, const glm::vec2& size, const glm::uvec2& samples,
+	           const std::shared_ptr<ShaderProgram> shader) {
 		this->seed = seed;
 		this->shininess = shininess;
 		this->bottomColor = bottomColor;
@@ -43,6 +46,7 @@ class GenTerrain {
 		this->size = size;
 		this->samples = samples;
 		this->noise = siv::PerlinNoise{seed};
+		this->shader = shader;
 	}
 
 	Mesh<ColorVertex> getTerrain();
