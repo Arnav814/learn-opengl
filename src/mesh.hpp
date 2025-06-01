@@ -28,7 +28,8 @@ struct TexVertex {
 struct ColorVertex {
 	glm::vec3 position;
 	glm::vec3 normal;
-	glm::vec3 color;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
 };
 
 enum class TextureType { textureDiffuse, textureSpecular };

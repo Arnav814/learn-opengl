@@ -1,8 +1,7 @@
 #include "genTerrain.hpp"
 
-glm::vec3 Terrain::pointFromData(const boost::multi_array<float, 2>& data,
-                                    const glm::uvec2 point, const glm::vec2 scale,
-                                    const float fallback) {
+glm::vec3 Terrain::pointFromData(const boost::multi_array<float, 2>& data, const glm::uvec2 point,
+                                 const glm::vec2 scale, const float fallback) {
 	float value;
 	if (point.x >= 0 and point.x < data.shape()[0] and point.y >= 0 and point.y < data.shape()[1])
 		value = data[point.x][point.y];
@@ -54,12 +53,16 @@ Mesh<ColorVertex> Terrain::getTerrain() {
 			// average the array
 			glm::vec3 averageNormal =
 			    std::accumulate(ALL_OF(normalsWith), glm::vec3(0)) / glm::vec3(normalsWith.size());
-			glm::vec3 color = glm::mix(this->bottomColor, this->topColor, position.y);
+			glm::vec3 diffuse =
+			    glm::mix(this->bottomColor.diffuse, this->topColor.diffuse, position.y);
+			glm::vec3 specular =
+			    glm::mix(this->bottomColor.specular, this->topColor.specular, position.y);
 
 			verticies.push_back(ColorVertex{
 			    .position = position,
 			    .normal = averageNormal, // TODO: fix artifacts in normals with strange X patterns
-			    .color = color,
+			    .diffuse = diffuse,
+			    .specular = specular,
 			});
 		}
 	}

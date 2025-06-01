@@ -14,12 +14,18 @@
 #include <limits>
 #include <memory>
 
+// contains a diffuse and specular component
+struct DSColor {
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+};
+
 class Terrain : public BaseSceneGraphObject {
   private:
 	ulong seed;
 	float shininess;
-	glm::vec3 bottomColor;
-	glm::vec3 topColor;
+	DSColor bottomColor;
+	DSColor topColor;
 	glm::vec2 size;
 	glm::uvec2 samples;
 	siv::PerlinNoise noise;
@@ -35,8 +41,8 @@ class Terrain : public BaseSceneGraphObject {
 	                        const float fallback = std::numeric_limits<float>::quiet_NaN());
 
   public:
-	Terrain(const ulong& seed, const float& shininess, const glm::vec3& bottomColor,
-	        const glm::vec3& topColor, const glm::vec2& size, const glm::uvec2& samples,
+	Terrain(const ulong& seed, const float& shininess, const DSColor& bottomColor,
+	        const DSColor& topColor, const glm::vec2& size, const glm::uvec2& samples,
 	        const ShaderPtr shader)
 	    : BaseSceneGraphObject(shader, glm::mat4(1)) {
 		this->seed = seed;

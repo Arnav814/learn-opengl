@@ -1,7 +1,8 @@
 #version 330 core
 in vec3 fragPos;
 in vec3 inputNormal;
-in vec3 vertColor;
+in vec3 vertDiffuse;
+in vec3 vertSpecular;
 
 out vec4 fragColor;
 
@@ -65,9 +66,8 @@ void main() {
 	vec3 normal = normalize(inputNormal);
 	vec3 viewDir = normalize(viewPos - fragPos);
 
-	// TODO: different diffuse and specular values
-	vec3 diffVal = vertColor;
-	vec3 specVal = vertColor;
+	vec3 diffVal = vertDiffuse;
+	vec3 specVal = vertSpecular;
 
 	// directional light
 	vec3 result = calcDirLight(dirLight, normal, viewDir, diffVal, specVal);

@@ -126,13 +126,15 @@ int main(void) {
 
 	std::print("Generating terrain... ");
 	std::fflush(stdout);
-	Terrain terrain{123'123,
-	                   32,
-	                   glm::vec3(0.96, 0.84, 0.69),
-	                   glm::vec3(0.25, 0.60, 0.04),
-	                   glm::vec2(50),
-	                   glm::ivec2(250),
-	                   terrainShader};
+	constexpr DSColor grass{
+	    glm::vec3(0.96, 0.84, 0.69),
+	    glm::vec3(0.96, 0.84, 0.69) / 16.f,
+	};
+	constexpr DSColor sand{
+	    glm::vec3(0.25, 0.60, 0.04),
+	    glm::vec3(0.25, 0.60, 0.04) / 4.f,
+	};
+	Terrain terrain{123'123, 32, grass, sand, glm::vec2(50), glm::ivec2(250), terrainShader};
 	scene->addChild(std::make_shared<Terrain>(terrain));
 	std::println("Done.");
 

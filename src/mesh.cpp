@@ -20,8 +20,12 @@ template <typename Vertex> void Mesh<Vertex>::setupMesh() {
 	STRUCT_MEMBER_ATTRIB(1, Vertex, normal);
 	if constexpr (requires { Vertex::texCoords; }) {
 		STRUCT_MEMBER_ATTRIB(2, Vertex, texCoords);
-	} else if constexpr (requires { Vertex::color; }) {
-		STRUCT_MEMBER_ATTRIB(2, Vertex, color);
+	} else if constexpr (requires {
+		                     Vertex::diffuse;
+		                     Vertex::specular;
+	                     }) {
+		STRUCT_MEMBER_ATTRIB(2, Vertex, diffuse);
+		STRUCT_MEMBER_ATTRIB(3, Vertex, specular);
 	} else {
 		static_assert(false);
 	}
