@@ -103,6 +103,9 @@ class BaseSceneGraphObject : public BaseSceneGraphNode {
 	virtual ~BaseSceneGraphObject() = default;
 };
 
+void recursivelyDo(const std::shared_ptr<BaseSceneGraphNode> node, std::vector<SceneCascade>& stack,
+                   const std::function<void(BaseSceneGraphNode&, const SceneCascade&)>& operation);
+
 void recursivelyRender(const std::shared_ptr<BaseSceneGraphNode> node, const Camera& camera,
                        std::vector<SceneCascade>& stack);
 
