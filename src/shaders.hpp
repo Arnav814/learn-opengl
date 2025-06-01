@@ -136,4 +136,7 @@ class ShaderProgram : public std::enable_shared_from_this<ShaderProgram> {
 	}
 };
 
+// used a lot; too much typing
+typedef std::shared_ptr<ShaderProgram> ShaderPtr;
+
 #endif /* SHADERS_HPP */

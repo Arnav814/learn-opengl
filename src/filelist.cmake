@@ -8,6 +8,7 @@ target_sources(prog PRIVATE
 	"./src/main.cpp"
 	"./src/mesh.cpp"
 	"./src/model.cpp"
+	"./src/sceneObject.cpp"
 	"./src/shaders.cpp"
 	"./src/stbImageBuild.cpp"
 	"./src/vertexData.cpp"

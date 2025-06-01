@@ -1,6 +1,6 @@
 #include "genTerrain.hpp"
 
-glm::vec3 GenTerrain::pointFromData(const boost::multi_array<float, 2>& data,
+glm::vec3 Terrain::pointFromData(const boost::multi_array<float, 2>& data,
                                     const glm::uvec2 point, const glm::vec2 scale,
                                     const float fallback) {
 	float value;
@@ -10,7 +10,7 @@ glm::vec3 GenTerrain::pointFromData(const boost::multi_array<float, 2>& data,
 	return glm::vec3(point.x * scale.x, value, point.y * scale.y);
 }
 
-Mesh<ColorVertex> GenTerrain::getTerrain() {
+Mesh<ColorVertex> Terrain::getTerrain() {
 	glm::vec2 scale = glm::vec2(this->size.x / this->samples.x, this->size.y / this->samples.y);
 	boost::multi_array<float, 2> terrainData(boost::extents[this->samples.x][this->samples.y]);
 

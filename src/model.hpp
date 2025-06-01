@@ -1,10 +1,9 @@
 #ifndef MODEL_HPP
 #define MODEL_HPP
 
-#include "assimp2glm.hpp"
 #include "common.hpp"
-#include "loadTexture.hpp"
 #include "mesh.hpp"
+#include "sceneObject.hpp"
 #include "shaders.hpp"
 
 #include <assimp/Importer.hpp>
@@ -18,11 +17,9 @@ void loadMaterialTextures(std::vector<Texture>& textures, const filesystem::path
                           const aiMaterial* mat, const aiTextureType type,
                           const TextureType textureType);
 
-class Model {
+class Model : public BaseSceneGraphObject {
   private:
-	std::vector<Mesh<TexVertex>> meshes;
-	filesystem::path directory;
-	std::shared_ptr<ShaderProgram> shader; // the shader to draw this model with
+	filesystem::path modelPath;
 
 	void loadModel(const filesystem::path& path);
 
@@ -31,18 +28,22 @@ class Model {
 	Mesh<TexVertex> processMesh(const aiMesh* mesh, const aiScene* scene);
 
   public:
-	Model(const filesystem::path& path, const std::shared_ptr<ShaderProgram> shader) {
-		this->shader = shader;
-		this->directory = path.parent_path();
+	Model(const filesystem::path& path, const std::shared_ptr<ShaderProgram> shader)
+	    : BaseSceneGraphObject(shader, glm::mat4(1)) {
+		this->modelPath = path;
 		this->loadModel(path);
 	}
 
-	void draw() {
-		this->shader->use();
-		for (Mesh<TexVertex>& mesh : this->meshes) {
-			mesh.draw();
-		}
+	// meshes do the actual drawing
+	virtual void render(const Camera& camera [[maybe_unused]],
+	                    const SceneCascade& cascade [[maybe_unused]]) {}
+
+	virtual void print(const SceneCascade& cascade) {
+		std::println("{}Model: {}", std::string(SCENE_GRAPH_INDENT * cascade.recurseDepth, ' '),
+		             this->modelPath.string());
 	}
+
+	virtual ~Model() = default;
 };
 
 #endif /* MODEL_HPP */

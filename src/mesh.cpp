@@ -31,6 +31,24 @@ template <typename Vertex> void Mesh<Vertex>::setupMesh() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+template <typename Vertex>
+void Mesh<Vertex>::render(const Camera& camera, const SceneCascade& cascade) {
+	// also include this node
+	SceneCascade combinedCascade = cascade + this->getNodeCascade();
+
+	this->shader->use();
+	this->shader->setUniform("obj2world", combinedCascade.transform);
+	this->shader->setUniform("obj2normal",
+	                         glm::mat3(glm::transpose(glm::inverse(combinedCascade.transform))));
+	this->shader->setUniform("world2cam", camera.toCamSpace());
+	this->shader->setUniform("projection", camera.projectionMat());
+	this->shader->setUniform("viewPos", camera.getPosition());
+
+	this->draw();
+
+	this->shader->stopUsing();
+}
+
 template <typename Vertex> void Mesh<Vertex>::draw() {
 	if constexpr (requires { Vertex::texCoords; }) {
 		// counters for number of diffuse/specular textures processed
@@ -45,8 +63,8 @@ template <typename Vertex> void Mesh<Vertex>::draw() {
 			if (texType == TextureType::textureDiffuse) number = std::to_string(diffuseN++);
 			else if (texType == TextureType::textureSpecular) number = std::to_string(specularN++);
 
-			this->shader->setUniform("material." + std::string(magic_enum::enum_name(texType)) + number,
-			                  (int)i);
+			this->shader->setUniform(
+			    "material." + std::string(magic_enum::enum_name(texType)) + number, (int)i);
 			glBindTexture(GL_TEXTURE_2D, textures[i].id);
 		}
 		glActiveTexture(GL_TEXTURE0);

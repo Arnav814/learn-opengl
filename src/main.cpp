@@ -26,21 +26,31 @@
 
 constexpr uint INIT_WIDTH = 800, INIT_HEIGHT = 600;
 
-int main(void) {
-	// code without checking for errors
-	SDL_Init(SDL_INIT_VIDEO);
+#define CALL_SDL(...) \
+	do { \
+		auto retval = __VA_ARGS__; \
+		if (not retval) { \
+			std::string errContent = SDL_GetError(); \
+			std::string errString = std::format("{} @ {}:{} returned {}: {}", #__VA_ARGS__, \
+			                                    __FILE__, __LINE__, retval, errContent); \
+			throw std::runtime_error(errString); \
+		} \
+	} while (false)
 
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+int main(void) {
+	CALL_SDL(SDL_Init(SDL_INIT_VIDEO));
+
+	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1));
+	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
+	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3));
+	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
+	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1));
+	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4));
 
 	SDL_Window* window =
 	    SDL_CreateWindow("[glad] GL with SDL", INIT_WIDTH, INIT_HEIGHT, SDL_WINDOW_OPENGL);
-	SDL_SetWindowResizable(window, true);
-	SDL_SetWindowRelativeMouseMode(window, true);
+	CALL_SDL(SDL_SetWindowResizable(window, true));
+	CALL_SDL(SDL_SetWindowRelativeMouseMode(window, true));
 
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 
@@ -105,22 +115,29 @@ int main(void) {
 
 	std::print("Loading models... ");
 	std::fflush(stdout);
-	Model backpack{MEDIA_DIR "./backpack/backpack.obj", objShader};
+
+	std::shared_ptr<SceneGraphRoot> scene = std::make_shared<SceneGraphRoot>();
+	scene->addChild(
+	    std::shared_ptr<Model>(new Model{MEDIA_DIR "./backpack/backpack.obj", objShader}));
+
 	std::println("Done.");
 
 	// TERRAIN
 
 	std::print("Generating terrain... ");
 	std::fflush(stdout);
-	GenTerrain getTerrain{123'123,
-	                      32,
-	                      glm::vec3(0.96, 0.84, 0.69),
-	                      glm::vec3(0.25, 0.60, 0.04),
-	                      glm::vec2(50),
-	                      glm::ivec2(250),
-	                      terrainShader};
-	Mesh terrain = getTerrain.getTerrain();
+	Terrain terrain{123'123,
+	                   32,
+	                   glm::vec3(0.96, 0.84, 0.69),
+	                   glm::vec3(0.25, 0.60, 0.04),
+	                   glm::vec2(50),
+	                   glm::ivec2(250),
+	                   terrainShader};
+	scene->addChild(std::make_shared<Terrain>(terrain));
 	std::println("Done.");
+
+	std::vector<SceneCascade> stack{};
+	recursivelyPrint(scene, stack);
 
 	// LIGHT BUFFERS
 
@@ -188,7 +205,7 @@ int main(void) {
 
 		if (resized) {
 			int width, height;
-			SDL_GetWindowSizeInPixels(window, &width, &height);
+			CALL_SDL(SDL_GetWindowSizeInPixels(window, &width, &height));
 			camera.setWindowSize(glm::ivec2(width, height));
 			glViewport(0, 0, width, height);
 		}
@@ -199,11 +216,6 @@ int main(void) {
 		glBindVertexArray(lightVAO);
 
 		objShader->use();
-		objShader->setUniform("obj2world", glm::mat4(1));
-		objShader->setUniform("obj2normal", glm::mat3(1));
-		objShader->setUniform("world2cam", camera.toCamSpace());
-		objShader->setUniform("projection", camera.projectionMat());
-		objShader->setUniform("viewPos", camera.getPosition());
 
 		dirLight.setStructUniform(*objShader, "dirLight");
 
@@ -217,30 +229,22 @@ int main(void) {
 		flashlight.direction = camera.getFront();
 		flashlight.setStructUniform(*objShader, "spotLight");
 
-		backpack.draw();
+		terrainShader->use();
 
-		{ // TODO: abstract out
-			terrainShader->use();
-			terrainShader->setUniform("obj2world", glm::mat4(1));
-			terrainShader->setUniform("obj2normal", glm::mat3(1));
-			terrainShader->setUniform("world2cam", camera.toCamSpace());
-			terrainShader->setUniform("projection", camera.projectionMat());
-			terrainShader->setUniform("viewPos", camera.getPosition());
+		dirLight.setStructUniform(*terrainShader, "dirLight");
 
-			dirLight.setStructUniform(*terrainShader, "dirLight");
-
-			for (uint i = 0; i < pointLights.size(); i++) {
-				pointLights[i].setStructUniform(*terrainShader, "pointLights", i);
-			}
-
-			// move spotlight to camera to act as a flashlight
-			SpotLight flashlight = baseSpotLight;
-			flashlight.position = camera.getPosition();
-			flashlight.direction = camera.getFront();
-			flashlight.setStructUniform(*terrainShader, "spotLight");
-
-			terrain.draw();
+		for (uint i = 0; i < pointLights.size(); i++) {
+			pointLights[i].setStructUniform(*terrainShader, "pointLights", i);
 		}
+
+		// move spotlight to camera to act as a flashlight
+		flashlight = baseSpotLight;
+		flashlight.position = camera.getPosition();
+		flashlight.direction = camera.getFront();
+		flashlight.setStructUniform(*terrainShader, "spotLight");
+
+		std::vector<SceneCascade> stack{};
+		recursivelyRender(scene, camera, stack);
 
 		glBindVertexArray(0);
 		objShader->stopUsing();
@@ -258,7 +262,7 @@ int main(void) {
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &lightVBO);
 
-	SDL_GL_DestroyContext(context);
+	CALL_SDL(SDL_GL_DestroyContext(context));
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 

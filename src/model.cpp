@@ -1,5 +1,7 @@
 #include "model.hpp"
 
+#include "assimp2glm.hpp"
+
 void loadMaterialTextures(std::vector<Texture>& textures, const filesystem::path& dirPath,
                           const aiMaterial* mat, const aiTextureType type,
                           const TextureType textureType) {
@@ -26,10 +28,9 @@ void loadMaterialTextures(std::vector<Texture>& textures, const filesystem::path
 
 void Model::loadModel(const filesystem::path& path) {
 	Assimp::Importer importer{};
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs
-	                                                   | aiProcess_JoinIdenticalVertices
-	                                                   | aiProcess_ValidateDataStructure
-													   | aiProcess_GenSmoothNormals);
+	const aiScene* scene = importer.ReadFile(
+	    path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices
+	              | aiProcess_ValidateDataStructure | aiProcess_GenSmoothNormals);
 	// check for errors
 	if (not scene or scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE or not scene->mRootNode) {
 		throw std::runtime_error(std::format("Failed to load model at {}: {}", path.string(),
@@ -44,7 +45,7 @@ void Model::processNode(const aiNode* node, const aiScene* scene) {
 	// process this node's meshes
 	for (uint i = 0; i < node->mNumMeshes; i++) {
 		const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		this->meshes.push_back(this->processMesh(mesh, scene));
+		this->addChild(std::make_shared<Mesh<TexVertex>>(this->processMesh(mesh, scene)));
 	}
 
 	// recurse into child nodes
@@ -81,10 +82,10 @@ Mesh<TexVertex> Model::processMesh(const aiMesh* mesh, const aiScene* scene) {
 	// process material
 	if (mesh->mMaterialIndex >= 0) {
 		const aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-		loadMaterialTextures(textures, this->directory, material, aiTextureType_DIFFUSE,
-		                     TextureType::textureDiffuse);
-		loadMaterialTextures(textures, this->directory, material, aiTextureType_SPECULAR,
-		                     TextureType::textureSpecular);
+		loadMaterialTextures(textures, this->modelPath.parent_path(), material,
+		                     aiTextureType_DIFFUSE, TextureType::textureDiffuse);
+		loadMaterialTextures(textures, this->modelPath.parent_path(), material,
+		                     aiTextureType_SPECULAR, TextureType::textureSpecular);
 		auto statusCode = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
 		if (statusCode != AI_SUCCESS) shininess = 32; // default value
 	}
