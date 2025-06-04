@@ -78,7 +78,11 @@ def parse(data: list[str], filename: str = "<stdin>") -> str:
     return with_version
 
 if __name__ == "__main__":
-    with open(sys.argv[1]) as f:
-        content = f.readlines()
-        print(parse(content, sys.argv[1]))
+    with open(sys.argv[1], 'r') as input_file:
+        content = input_file.readlines()
+
+    text: str = parse(content, sys.argv[1])
+
+    with open(sys.argv[2], 'w+') as output_file:
+        output_file.write(text)
 

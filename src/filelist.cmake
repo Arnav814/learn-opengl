@@ -14,3 +14,12 @@ target_sources(prog PRIVATE
 	"./src/vertexData.cpp"
 )
 
+set(SHADER_FILES
+	"./lightCube.frag.glsl"
+	"./lightCube.vert.glsl"
+	"./object.frag.glsl"
+	"./object.vert.glsl"
+	"./terrain.frag.glsl"
+	"./terrain.vert.glsl"
+)
+

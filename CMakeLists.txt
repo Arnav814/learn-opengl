@@ -97,8 +97,8 @@ if (PerlinNoise_ADDED)
 endif()
 
 add_executable(prog)
-target_compile_features(prog PRIVATE cxx_std_23)
 include("src/filelist.cmake")
+target_compile_features(prog PRIVATE cxx_std_23)
 target_sources(prog PRIVATE ./glad/src/gl.c)
 
 target_compile_definitions(prog PRIVATE SOURCE_DIR="${CMAKE_SOURCE_DIR}/src/")
@@ -110,6 +110,35 @@ if (DEFINED MY_COMPILE_OPTS) # defined by CMakePresets.json sometimes
 	target_compile_options(prog PRIVATE ${MY_CXX_FLAGS})
 	target_link_options(prog PRIVATE ${MY_CXX_FLAGS})
 endif()
+
+# for shader config
+list(TRANSFORM SHADER_FILES PREPEND ${CMAKE_BINARY_DIR}/shaders/ OUTPUT_VARIABLE OUTPUT_SHADER_FILES)
+add_custom_target(
+	preprocess_all_shaders
+	DEPENDS ${OUTPUT_SHADER_FILES}
+)
+add_dependencies(prog preprocess_all_shaders)
+
+find_package(Python COMPONENTS Interpreter)
+if (NOT Python_Interpreter_FOUND)
+	message("Couldn't find Python." FATAL_ERROR)
+endif()
+
+function(preprocess_shader SHADER)
+	set(IN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/${SHADER}")
+	set(OUT_FILE "${CMAKE_BINARY_DIR}/shaders/${SHADER}")
+	add_custom_command(
+		OUTPUT ${OUT_FILE}
+		COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse.py ${IN_FILE} ${OUT_FILE}
+		COMMENT "Processing ${IN_FILE}"
+		VERBATIM
+	)
+endfunction()
+
+make_directory(${CMAKE_BINARY_DIR}/shaders)
+foreach(SHADER IN ZIP_LISTS SHADER_FILES)
+	preprocess_shader(${SHADER_0})
+endforeach()
 
 target_include_directories(prog PRIVATE ./glad/include)
 target_link_libraries(prog PRIVATE SDL3::SDL3)
