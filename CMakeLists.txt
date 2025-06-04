@@ -112,13 +112,6 @@ if (DEFINED MY_COMPILE_OPTS) # defined by CMakePresets.json sometimes
 endif()
 
 # for shader config
-list(TRANSFORM SHADER_FILES PREPEND ${CMAKE_BINARY_DIR}/shaders/ OUTPUT_VARIABLE OUTPUT_SHADER_FILES)
-add_custom_target(
-	preprocess_all_shaders
-	DEPENDS ${OUTPUT_SHADER_FILES}
-)
-add_dependencies(prog preprocess_all_shaders)
-
 find_package(Python COMPONENTS Interpreter)
 if (NOT Python_Interpreter_FOUND)
 	message("Couldn't find Python." FATAL_ERROR)
@@ -126,21 +119,47 @@ endif()
 
 function(preprocess_shader SHADER)
 	set(IN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/${SHADER}")
-	set(OUT_FILE "${CMAKE_BINARY_DIR}/shaders/${SHADER}")
+	set(OUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER}")
 	add_custom_command(
 		OUTPUT ${OUT_FILE}
 		COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse.py ${IN_FILE} ${OUT_FILE}
-		COMMENT "Processing ${IN_FILE}"
+		COMMENT "Processing ${OUT_FILE}."
 		VERBATIM
 	)
 endfunction()
 
-make_directory(${CMAKE_BINARY_DIR}/shaders)
+
+
+function(parse_shader SHADER FILE_LIST)
+	set(IN_FILE "${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER}")
+	string(REPLACE "./" "" CLEAN_SHADER_NAME "${SHADER}")
+	string(REPLACE "." "_" CLEAN_SHADER_NAME "${CLEAN_SHADER_NAME}")
+	set(OUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/shaders/${CLEAN_SHADER_NAME}.hpp")
+	list(APPEND ${FILE_LIST} "${OUT_FILE}")
+	set(${FILE_LIST} "${${FILE_LIST}}" PARENT_SCOPE)
+
+	add_custom_command(
+		DEPENDS ${IN_FILE}
+		OUTPUT ${OUT_FILE}
+		COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_all_setters.py ${IN_FILE} ${OUT_FILE}
+		COMMENT "Generating ${OUT_FILE}."
+		VERBATIM
+	)
+endfunction()
+
+make_directory(${CMAKE_CURRENT_BINARY_DIR}/shaders)
+set(OUTPUT_SHADER_FILES)
 foreach(SHADER IN ZIP_LISTS SHADER_FILES)
 	preprocess_shader(${SHADER_0})
+	parse_shader(${SHADER_0} OUTPUT_SHADER_FILES)
 endforeach()
 
-target_include_directories(prog PRIVATE ./glad/include)
+message("${OUTPUT_SHADER_FILES}")
+add_library(shader_interop INTERFACE "${OUTPUT_SHADER_FILES}")
+
+target_include_directories(prog PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/glad/include)
+target_include_directories(prog PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/shaders)
+target_link_libraries(prog PRIVATE shader_interop)
 target_link_libraries(prog PRIVATE SDL3::SDL3)
 target_link_libraries(prog PRIVATE assimp::assimp)
 target_link_libraries(prog PRIVATE magic_enum::magic_enum)
