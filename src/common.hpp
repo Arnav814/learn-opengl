@@ -13,7 +13,12 @@ namespace std {
 namespace filesystem {}
 } // namespace std
 
+namespace boost {
+namespace hana {}
+} // namespace boost
+
 namespace filesystem = std::filesystem;
+namespace hana = boost::hana;
 
 #define origin2d {0, 0}
 #define origin3d {0, 0, 0}

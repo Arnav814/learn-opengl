@@ -3,6 +3,7 @@
 #include "genTerrain.hpp"
 #include "lighting.hpp"
 #include "model.hpp"
+#include "object_frag_glsl.hpp"
 #include "shaders.hpp"
 #include "vertexData.hpp"
 
