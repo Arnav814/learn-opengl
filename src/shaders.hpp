@@ -143,48 +143,4 @@ class ShaderProgram : public std::enable_shared_from_this<ShaderProgram> {
 // used a lot; too much typing
 typedef std::shared_ptr<ShaderProgram> ShaderPtr;
 
-template <typename Type, glm::length_t Length, glm::qualifier Qual>
-consteval uint std140alignment(const glm::vec<Length, Type, Qual>& vec [[maybe_unused]]) {
-	if constexpr (Length == 2) return 2 * sizeof(Type);
-	else if constexpr (Length == 3 or Length == 4) return 4 * sizeof(Type);
-	else static_assert(false);
-}
-
-template <typename T> consteval uint std140alignment(const T& val [[maybe_unused]]) {
-	if constexpr (typeid(T) == typeid(bool) or typeid(T) == typeid(int) or typeid(T) == typeid(uint)
-	              or typeid(T) == typeid(float))
-		return 4;
-	else if constexpr (typeid(T) == typeid(double)) return 8;
-	else static_assert(false);
-}
-
-template <typename T> void vecAdd(std::vector<std::byte>& vec, const T& arr) {
-	for (const auto& i : arr)
-		vec.push_back(i);
-}
-
-template <typename T> std::vector<std::byte> std140serialize(const T& value) {
-	std::vector<std::byte> output{};
-
-	hana::for_each(hana::members(value), [&](auto member) {
-		// see
-		// https://www.oreilly.com/library/view/opengl-programming-guide/9780132748445/app09lev1sec2.html
-		// for the rules implemented here
-		if constexpr (requires { std140alignment(member); }) {
-			uint alignment = std140alignment(member);
-			uint delta = alignment - output.size() % alignment;
-			auto padding = std::vector<std::byte>(delta, (std::byte)0);
-			vecAdd(output, padding);
-			vecAdd(output, reinterpret_cast<std::byte*>(&member));
-		} else {
-			vecAdd(output, std140serialize(member));
-		}
-	});
-
-	return output;
-}
-
-template std::vector<std::byte> std140serialize<Shader_object_frag::DirectionalLight>(
-    const Shader_object_frag::DirectionalLight& value);
-
 #endif /* SHADERS_HPP */

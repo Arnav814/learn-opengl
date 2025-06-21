@@ -29,7 +29,7 @@ CPMAddPackage(
 CPMAddPackage(
 	NAME assimp
 	GITHUB_REPOSITORY "assimp/assimp"
-	GIT_TAG "v5.4.3"
+	GIT_TAG "v6.0.2"
 	EXCLUDE_FROM_ALL ON
 	SYSTEM ON
 	OPTIONS
@@ -127,8 +127,6 @@ function(preprocess_shader SHADER)
 		VERBATIM
 	)
 endfunction()
-
-
 
 function(parse_shader SHADER FILE_LIST)
 	set(IN_FILE "${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER}")
