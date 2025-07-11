@@ -121,6 +121,7 @@ function(preprocess_shader SHADER)
 	set(IN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/${SHADER}")
 	set(OUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER}")
 	add_custom_command(
+		DEPENDS ${IN_FILE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse.py
 		OUTPUT ${OUT_FILE}
 		COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse.py ${IN_FILE} ${OUT_FILE}
 		COMMENT "Processing ${OUT_FILE}."
@@ -128,31 +129,43 @@ function(preprocess_shader SHADER)
 	)
 endfunction()
 
-function(parse_shader SHADER FILE_LIST)
-	set(IN_FILE "${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER}")
-	string(REPLACE "./" "" CLEAN_SHADER_NAME "${SHADER}")
-	string(REPLACE "." "_" CLEAN_SHADER_NAME "${CLEAN_SHADER_NAME}")
-	set(OUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/shaders/${CLEAN_SHADER_NAME}.hpp")
+function(parse_shader SHADER_NAME SHADER_FILES FILE_LIST)
+	set(IN_FILES)
+	foreach(SHADER_FILE IN ZIP_LISTS ${SHADER_FILES})
+		list(APPEND IN_FILES "${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER_FILE_0}")
+	endforeach()
+	set(OUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER_NAME}.hpp")
 	list(APPEND ${FILE_LIST} "${OUT_FILE}")
 	set(${FILE_LIST} "${${FILE_LIST}}" PARENT_SCOPE)
 
 	add_custom_command(
-		DEPENDS ${IN_FILE}
+		DEPENDS ${IN_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_all_setters.py ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_uniform_setters.py
 		OUTPUT ${OUT_FILE}
-		COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_all_setters.py ${IN_FILE} ${OUT_FILE}
+		COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_all_setters.py ${IN_FILES} ${OUT_FILE}
 		COMMENT "Generating ${OUT_FILE}."
 		VERBATIM
 	)
 endfunction()
 
+
+set(SHADER_NAMES ${SHADER_FILES})
+list(TRANSFORM SHADER_NAMES REPLACE "(.+)\\.(vert|frag|geom|tess)(\\.glsl)?" "\\1")
+list(TRANSFORM SHADER_NAMES REPLACE "\\./" "")
+list(REMOVE_DUPLICATES SHADER_NAMES)
+
 make_directory(${CMAKE_CURRENT_BINARY_DIR}/shaders)
 set(OUTPUT_SHADER_FILES)
-foreach(SHADER IN ZIP_LISTS SHADER_FILES)
-	preprocess_shader(${SHADER_0})
-	parse_shader(${SHADER_0} OUTPUT_SHADER_FILES)
+
+foreach(SHADER_FILE IN ZIP_LISTS SHADER_FILES)
+	preprocess_shader(${SHADER_FILE_0})
 endforeach()
 
-message("${OUTPUT_SHADER_FILES}")
+foreach(SHADER IN ZIP_LISTS SHADER_NAMES)
+	set(THIS_STEP_SHADERS ${SHADER_FILES})
+	list(FILTER THIS_STEP_SHADERS INCLUDE REGEX "\\./${SHADER_0}\\.(vert|frag|geom|tess)(\\.glsl)?")
+	parse_shader(${SHADER_0} THIS_STEP_SHADERS OUTPUT_SHADER_FILES)
+endforeach()
+
 add_library(shader_interop INTERFACE "${OUTPUT_SHADER_FILES}")
 
 target_include_directories(prog PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/glad/include)

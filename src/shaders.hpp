@@ -1,7 +1,7 @@
 #ifndef SHADERS_HPP
 #define SHADERS_HPP
 #include "common.hpp"
-#include "object_frag_glsl.hpp"
+#include "object.hpp"
 
 #include <glad/gl.h>
 

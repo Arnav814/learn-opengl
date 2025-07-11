@@ -1,22 +1,36 @@
 #! /usr/bin/env python3
 import re
 import sys
+from dataclasses import dataclass
 import make_uniform_setters
+from make_uniform_setters import Struct
 
-FIND_STRUCT: re.Pattern = re.compile(r"struct \S+ {.*?};", re.DOTALL)
 # TODO: keep comments
 COMMENTS: re.Pattern = re.compile(r"//.*$", re.MULTILINE)
 
+def remove_comments(file_contents: str) -> str:
+    return re.sub(COMMENTS, "", file_contents)
+
+FIND_STRUCT: re.Pattern = re.compile(r"struct \S+ {.*?};", re.DOTALL)
+
 def find_structs(file_contents: str) -> list[str]:
-    file_contents = re.sub(COMMENTS, "", file_contents)
     return re.findall(FIND_STRUCT, file_contents)
 
-def process_file(file_contents: str) -> str:
+@dataclass
+class ParsedFile:
+    struct_code: list[tuple[str, str]] # maps structs to their corresponding code
+
+def process_file(file_contents: str) -> ParsedFile:
+    file_contents = remove_comments(file_contents)
     structs: list[str] = find_structs(file_contents)
+
     struct_table: dict[str, Struct] = {}
-    output = ""
+    output = ParsedFile([])
     for struct in structs:
-        output += make_uniform_setters.process_struct(struct, struct_table)
+        struct_name, struct_code = \
+            make_uniform_setters.process_struct(struct, struct_table)
+        output.struct_code.append((struct_name, struct_code))
+
     return output
 
 SHADER_NAME: re.Pattern = re.compile(r"(.*?)(\.glsl)?$")
@@ -37,24 +51,57 @@ def header(namespace: str) -> str:
              "#include <glm/glm.hpp>\n"
              "#include \"../../src/shaders/shaderCommon.hpp\"\n\n"
             f"namespace {namespace} {{\n"
-             "typedef int sampler2D;\n"
-            "template <typename T> uint std140sizeofImpl();\n"
-             "#define std140sizeof(structType) std140sizeofImpl<structType>()\n"
            )
 
 def footer() -> str:
     return "\n}\n\n"
 
-if __name__ == "__main__":
-    with open(sys.argv[1], 'r') as input_file:
-        input_str: str = input_file.read()
+PASCAL_CASE: re.Pattern = re.compile(r"(?<!^)(?<=[a-z])(?=[A-Z])")
+
+# generates the final C++ program
+def link_shader(files: list[ParsedFile]) -> str:
+    # exact duplicates are fine
+    joined_defs: set[tuple[str, str]] = set()
+    for file in files:
+        joined_defs |= set(file.struct_code)
+
+    joined_list = list(joined_defs)
+    for file_index, file in enumerate(joined_list):
+        for j in joined_list[file_index + 1:]:
+            if file[0] == j[0]: # names are the same, definitions are not
+                breakpoint()
+                raise Exception(f"Differing definitions of struct {file[0]}: \"{file[1]}\" and \"{j[1]}\"")
 
     output: str = ""
-    namespace: str = "Shader_" + shader_name(sys.argv[1])
+    namespace: str = "Shaders"
     output += header(namespace)
-    output += process_file(input_str)
-    output += footer()
 
-    with open(sys.argv[2], "w+") as output_file:
+    for file in joined_list:
+
+        # so that different definitions in different files are caught
+        define_name: str = "STRUCT_HASH_" + re.sub(PASCAL_CASE, "_", file[0]).upper()
+        struct_hash: int = hash(file[1])
+        output += f"\n#ifndef {define_name}\n"
+        output +=   file[1]
+        output +=   f"\n#define {define_name} {struct_hash}\n"
+        output +=  "#else\n"
+        output +=   f"#if {define_name} != {struct_hash}\n"
+        output +=     f"#error \"Conflicting definitiions of {define_name}\"\n"
+        output +=    "#endif\n"
+        output +=  "#endif\n"
+
+    output += footer()
+    return output
+
+if __name__ == "__main__":
+    parsed_files: list[ParsedFile] = []
+    for i in sys.argv[1:-1]:
+        with open(i, 'r') as input_file:
+            input_str: str = input_file.read()
+            parsed_files.append(process_file(input_str))
+
+    output: str = link_shader(parsed_files)
+
+    with open(sys.argv[-1], "w+") as output_file:
         output_file.write(output)
 

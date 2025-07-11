@@ -11,6 +11,8 @@
 #include <type_traits>
 #include <vector>
 
+namespace Shaders {
+
 template <typename T, typename... U>
 concept IsAnyOf = (std::same_as<T, U> or ...);
 
@@ -60,5 +62,10 @@ inline void pad(std::vector<std::byte>& output, const uint padbytes) {
 		output.push_back(static_cast<std::byte>(0x00));
 	}
 }
+
+typedef int sampler2D;
+template <typename T> uint std140sizeofImpl();
+#define std140sizeof(structType) std140sizeofImpl<structType>()
+} // namespace Shaders
 
 #endif /* SHADERCOMMON_HPP */

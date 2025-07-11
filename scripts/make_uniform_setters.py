@@ -140,6 +140,7 @@ def parse_vector(typename: str) -> BasicSerializable:
     return BasicSerializable(base_size * dims, alignment)
 
 # arrays have to be handled earlier
+# TODO: support matricies
 def parse_typename(typename: str, struct_table: dict[str, Struct]) -> BasicSerializable | Struct:
     try:
         return parse_scalar(typename)
@@ -159,7 +160,7 @@ def parse_typename(typename: str, struct_table: dict[str, Struct]) -> BasicSeria
     raise Exception(f"Failed to parse typename {typename}.")
 
 STRUCT_PARSE: re.Pattern = \
-    re.compile(r"struct\s+(?P<name>\S+)\s+{(?P<contents>.*?)}\s*;", re.DOTALL)
+    re.compile(r"struct\s+(?P<name>\S+)\s*{(?P<contents>.*?)}\s*;", re.DOTALL)
 VAR_PARSE: re.Pattern = \
     re.compile(r"(?P<type>[^\s\{\}\]\[\]\|\\\;]+)\s*(?P<var>[^[^\s\{\}\]\[\]\|\\\;]+)\s*(\[(?P<length>\d+)\])?\s*;", re.DOTALL)
 
@@ -199,20 +200,28 @@ def generate_setter(struct: Struct, name: str) -> str:
 
     return output_code
 
+WHITESPACE: re.Pattern = re.compile(r"\s+")
+WHITESPACED_SYMBOLS: re.Pattern = re.compile(r"\s*([{}[\];])\s*")
+
 # uses regex to convert the struct to cpp code
 def convert_struct(struct: str) -> str:
     struct = re.sub(VECTOR_PARSE, "glm::\\g<0>", struct)
     struct = struct.replace("sampler2D", "uint")
+
+    # get the struct to a known state, so it can be hashed
+    struct = re.sub(WHITESPACE, " ", struct)
+    struct = re.sub(WHITESPACED_SYMBOLS, r"\1", struct)
+
     return struct
 
-# generates the code for a struct
+# generates the code for a struct, returns name and the code
 # updates the struct table automatically
-def process_struct(struct_def: str, struct_table: dict[str, Struct]) -> str:
+def process_struct(struct_def: str, struct_table: dict[str, Struct]) -> tuple[str, str]:
     struct_def = convert_struct(struct_def)
     struct, name = parse_struct(struct_def, struct_table)
     struct_table[name] = struct
     setter: str = generate_setter(struct, name)
-    return struct_def + "\n" + setter
+    return name, struct_def + "\n" + setter
 
 if __name__ == "__main__":
     struct, name = parse_struct("""struct ExampleLightThingy {
