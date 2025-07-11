@@ -2,8 +2,8 @@
 import re
 import sys
 from dataclasses import dataclass
-import make_uniform_setters
-from make_uniform_setters import Struct
+import shader_structs
+from shader_structs import Struct
 
 # TODO: keep comments
 COMMENTS: re.Pattern = re.compile(r"//.*$", re.MULTILINE)
@@ -28,7 +28,7 @@ def process_file(file_contents: str) -> ParsedFile:
     output = ParsedFile([])
     for struct in structs:
         struct_name, struct_code = \
-            make_uniform_setters.process_struct(struct, struct_table)
+            shader_structs.process_struct(struct, struct_table)
         output.struct_code.append((struct_name, struct_code))
 
     return output

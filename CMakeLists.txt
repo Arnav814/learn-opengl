@@ -141,7 +141,7 @@ function(parse_shader SHADER_NAME SHADER_FILES FILE_LIST)
 	add_custom_command(
 		DEPENDS ${IN_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_all_setters.py ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_uniform_setters.py
 		OUTPUT ${OUT_FILE}
-		COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_all_setters.py ${IN_FILES} ${OUT_FILE}
+		COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/shader_interop.py ${IN_FILES} ${OUT_FILE}
 		COMMENT "Generating ${OUT_FILE}."
 		VERBATIM
 	)
