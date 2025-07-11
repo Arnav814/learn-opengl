@@ -115,7 +115,7 @@ def parse_scalar(typename: str) -> BasicSerializable:
 VECTOR_PARSE: re.Pattern = re.compile(r"(?P<type>[biufd])?vec(?P<dims>[234])")
 GLM_NAMESPACE: re.Pattern = re.compile(r"^glm::")
 def parse_vector(typename: str) -> BasicSerializable:
-    typename: str = re.sub(GLM_NAMESPACE, "", typename)
+    typename = re.sub(GLM_NAMESPACE, "", typename)
     vec_match: re.Match | None = re.fullmatch(VECTOR_PARSE, typename)
     if vec_match is None:
         raise InvalidParse()

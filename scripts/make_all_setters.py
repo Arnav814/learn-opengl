@@ -61,16 +61,16 @@ PASCAL_CASE: re.Pattern = re.compile(r"(?<!^)(?<=[a-z])(?=[A-Z])")
 # generates the final C++ program
 def link_shader(files: list[ParsedFile]) -> str:
     # exact duplicates are fine
+    # the tuple contains struct name and struct code
     joined_defs: set[tuple[str, str]] = set()
-    for file in files:
-        joined_defs |= set(file.struct_code)
+    for elem in files:
+        joined_defs |= set(elem.struct_code)
 
     joined_list = list(joined_defs)
     for file_index, file in enumerate(joined_list):
-        for j in joined_list[file_index + 1:]:
-            if file[0] == j[0]: # names are the same, definitions are not
-                breakpoint()
-                raise Exception(f"Differing definitions of struct {file[0]}: \"{file[1]}\" and \"{j[1]}\"")
+        for next_file in joined_list[file_index + 1:]:
+            if file[0] == next_file[0]: # names are the same, definitions are not
+                raise Exception(f"Differing definitions of struct {file[0]}: \"{file[1]}\" and \"{next_file[1]}\"")
 
     output: str = ""
     namespace: str = "Shaders"
