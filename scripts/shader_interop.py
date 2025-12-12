@@ -52,7 +52,7 @@ def header(namespace: str) -> str:
              "#include <glm/glm.hpp>\n"
              "#include \"../../src/shaders/shaderCommon.hpp\"\n\n"
             f"namespace {namespace} {{\n"
-           )
+    )
 
 def footer() -> str:
     return "\n}\n\n"
@@ -60,7 +60,7 @@ def footer() -> str:
 PASCAL_CASE: re.Pattern = re.compile(r"(?<!^)(?<=[a-z])(?=[A-Z])")
 
 # generates the final C++ program
-def link_shader(files: list[ParsedFile]) -> str:
+def link_shader(files: list[ParsedFile], class_def: str) -> str:
     # exact duplicates are fine
     # the tuple contains struct name and struct code
     joined_defs: set[tuple[str, str]] = set()
@@ -76,6 +76,8 @@ def link_shader(files: list[ParsedFile]) -> str:
     output: str = ""
     namespace: str = "Shaders"
     output += header(namespace)
+
+    output += "\n" + class_def + "\n"
 
     for file in joined_list:
 
@@ -96,12 +98,18 @@ def link_shader(files: list[ParsedFile]) -> str:
 
 if __name__ == "__main__":
     parsed_files: list[ParsedFile] = []
-    for i in sys.argv[1:-1]:
+    input_filenames: list[str] = sys.argv[1:-1]
+    file_contents: str = ""
+
+    for i in input_filenames:
         with open(i, 'r') as input_file:
             input_str: str = input_file.read()
+            file_contents += "\n" + input_str
             parsed_files.append(process_file(input_str))
 
-    output: str = link_shader(parsed_files)
+    class_def: str = shader_uniforms.generate_class(file_contents, input_filenames)
+
+    output: str = link_shader(parsed_files, class_def)
 
     with open(sys.argv[-1], "w+") as output_file:
         output_file.write(output)
