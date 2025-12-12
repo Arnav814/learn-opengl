@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.29)
 project(learn-opengl)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+cmake_policy(SET CMP0171 NEW)
 
 # download CPM.cmake
 file(
@@ -126,6 +127,7 @@ function(preprocess_shader SHADER)
 		COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/parse.py ${IN_FILE} ${OUT_FILE}
 		COMMENT "Processing ${OUT_FILE}."
 		VERBATIM
+		CODEGEN
 	)
 endfunction()
 
@@ -139,11 +141,12 @@ function(parse_shader SHADER_NAME SHADER_FILES FILE_LIST)
 	set(${FILE_LIST} "${${FILE_LIST}}" PARENT_SCOPE)
 
 	add_custom_command(
-		DEPENDS ${IN_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_all_setters.py ${CMAKE_CURRENT_SOURCE_DIR}/scripts/make_uniform_setters.py
+		DEPENDS ${IN_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/shader_interop.py ${CMAKE_CURRENT_SOURCE_DIR}/scripts/shader_structs.py ${CMAKE_CURRENT_SOURCE_DIR}/scripts/shader_uniforms.py
 		OUTPUT ${OUT_FILE}
 		COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/shader_interop.py ${IN_FILES} ${OUT_FILE}
 		COMMENT "Generating ${OUT_FILE}."
 		VERBATIM
+		CODEGEN
 	)
 endfunction()
 
@@ -176,6 +179,7 @@ target_link_libraries(prog PRIVATE assimp::assimp)
 target_link_libraries(prog PRIVATE magic_enum::magic_enum)
 target_link_libraries(prog PRIVATE glm::glm)
 target_link_libraries(prog PRIVATE Boost::multi_array)
+target_link_libraries(prog PRIVATE Boost::hana)
 target_link_libraries(prog PRIVATE stb)
 target_link_libraries(prog PRIVATE PerlinNoise)
 

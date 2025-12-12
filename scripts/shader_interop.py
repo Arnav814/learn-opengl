@@ -4,6 +4,7 @@ import sys
 from dataclasses import dataclass
 import shader_structs
 from shader_structs import Struct
+import shader_uniforms
 
 # TODO: keep comments
 COMMENTS: re.Pattern = re.compile(r"//.*$", re.MULTILINE)
@@ -86,7 +87,7 @@ def link_shader(files: list[ParsedFile]) -> str:
         output +=   f"\n#define {define_name} {struct_hash}\n"
         output +=  "#else\n"
         output +=   f"#if {define_name} != {struct_hash}\n"
-        output +=     f"#error \"Conflicting definitiions of {define_name}\"\n"
+        output +=     f"#error \"Conflicting definitiions of struct {file[0]}\"\n"
         output +=    "#endif\n"
         output +=  "#endif\n"
 

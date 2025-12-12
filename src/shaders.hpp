@@ -32,14 +32,17 @@
 #include <print>
 #include <string>
 
+namespace Shaders {
+
 enum class ShaderType { vertexShader, geometryShader, fragmentShader };
 
+// should be extended by the appropriate auto generated classes
 class ShaderProgram : public std::enable_shared_from_this<ShaderProgram> {
   private:
-	uint shaderProgram;
-
 	uint compileShader(const std::string& source, const filesystem::path& path,
 	                   ShaderType shaderType);
+
+	std::unordered_map<std::string, int> locationCache;
 
 	// Keep the constructor private. I can't just mark it private because that causes errors when
 	// std::shared_ptr tries calling said constructor.
@@ -50,10 +53,21 @@ class ShaderProgram : public std::enable_shared_from_this<ShaderProgram> {
 	ShaderProgram(const ShaderProgram&) = delete;
 	ShaderProgram& operator=(const ShaderProgram&) = delete;
 
-  public:
-	// only instantiateable as a shared pointer
-	ShaderProgram(const filesystem::path& vertexShaderPath,
-	              const filesystem::path& fragmentShaderPath, const PrivateObj obj);
+  protected:
+	uint shaderProgram;
+
+	// call glGetUniformLocation with a cache
+	// note: nothing is ever deleted from the cache, but if you have that many uniforms you have
+	// other, more pressing problems
+	int getUniformLocation(const std::string& name) {
+ 		if (this->locationCache.count(name) == 1) {
+			return this->locationCache[name];
+		} else {
+			int location = glGetUniformLocation(this->shaderProgram, name.c_str());
+			this->locationCache.insert({name, location});
+			return location;
+		}
+	}
 
 	// paths are loaded at runtime, so must be relative to the binary (or absolute)
 	static std::shared_ptr<ShaderProgram> make(const filesystem::path& vertexShaderPath,
@@ -61,6 +75,11 @@ class ShaderProgram : public std::enable_shared_from_this<ShaderProgram> {
 		return std::make_shared<ShaderProgram>(vertexShaderPath, fragmentShaderPath, PrivateObj{});
 	}
 
+	// only instantiateable as a shared pointer
+	ShaderProgram(const filesystem::path& vertexShaderPath,
+	              const filesystem::path& fragmentShaderPath, const PrivateObj obj);
+
+  public:
 	// get a new pointer to this object
 	std::shared_ptr<ShaderProgram> getptr() { return shared_from_this(); }
 
@@ -140,7 +159,9 @@ class ShaderProgram : public std::enable_shared_from_this<ShaderProgram> {
 	}
 };
 
+} // namespace Shaders
+
 // used a lot; too much typing
-typedef std::shared_ptr<ShaderProgram> ShaderPtr;
+typedef std::shared_ptr<Shaders::ShaderProgram> ShaderPtr;
 
 #endif /* SHADERS_HPP */

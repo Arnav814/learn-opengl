@@ -1,6 +1,9 @@
 # build directory
 /build
+
+# python things
 /scripts/__pycache__
+.mypy_cache
 
 # clangd stuff
 *.cache

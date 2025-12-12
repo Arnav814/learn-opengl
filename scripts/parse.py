@@ -28,6 +28,7 @@ def extract_version(data: list[str]) -> str:
 
 def preprocess(content: str) -> str:
     as_bytes = content.encode("utf8")
+    # TODO: use the configured compiler
     process = subprocess.run(["clang", "-E", "--no-standard-includes", "--comments", "-"],
                              input=as_bytes, capture_output=True, check=True)
     stderr_decoded: str = process.stderr.decode("utf8")
