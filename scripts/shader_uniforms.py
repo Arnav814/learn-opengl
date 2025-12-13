@@ -7,10 +7,20 @@ FIND_UNIFORMS: re.Pattern = \
     re.compile(r"uniform\s+(?P<type>[^\s\{\}\]\[\]\|\\\;]+)\s+(?P<name>[^\s\{\}\]\[\]\|\\\;]+)(\[(?P<length>\d+)\])?;", re.DOTALL)
 
 
+# converts a camelCase string to PascalCase
+def cvt_case(camel_case: str) -> str:
+    if len(camel_case) == 0:
+        return ""
+    elif len(camel_case) == 1:
+        return camel_case.upper()
+    else:
+        return camel_case[0].upper() + camel_case[1::]
+
+
 # generates the C++ code for the shader subclass
 def generate_class(file_contents: str, input_filenames: list[str]) -> str:
     file_name = input_filenames[0].split("/")[-1].split(".")[0]
-    name: str = file_name.capitalize()
+    name: str = cvt_case(file_name)
 
     uniforms = find_uniforms(file_contents)
     out = make_class_header(name, input_filenames)
@@ -39,40 +49,6 @@ def cvt_type(gltype: str) -> str:
         return gltype  # assume a custom struct
 
 
-# get the OpenGL function to set a uniform of the given GLM type (not GLSL type)
-# second return value is the args for said function, to go after the variable location
-def get_opengl_setter(typename: str, varname: str) -> tuple[str, str]:
-    if typename == "int" or typename == "bool":
-        return "glUniform1i", varname
-    elif typename == "float":
-        return "glUniform1f", varname
-    elif typename == "double":
-        # needs extensions or something
-        raise ValueError("Uniforms can't be doubles")
-
-    if typename in PRIMATIVE_TYPES:
-        raise Exception("All primative types should be handled by now.")
-
-    if "vec" in typename:
-        without_ns = typename.removeprefix("glm::")
-        first_letter = without_ns[0]
-
-        # default vector
-        if first_letter == 'v':
-            first_letter = 'f'
-
-        count = int(without_ns[-1])
-        args: list[str] = [f"{varname}.{['x', 'y', 'z', 'w'][i]}" for i in range(count)]
-
-        return f"glUniform{count}{first_letter}", ",".join(args)
-
-    if "glm::mat" in typename:  # TODO: handle non-float matrices
-        count = int(typename[-1])
-        return "glUniformMatrix{count}fv", "1, GL_FALSE, glm::value_ptr({varname})"
-
-    raise ValueError(f"Couldn't match {typename} to an OpenGL setUniformXX function.")
-
-
 def get_path_matching(paths: list[str], regex: re.Pattern):
     for path in paths:
         if (regex.search(path) is not None):
@@ -84,16 +60,27 @@ def get_path_matching(paths: list[str], regex: re.Pattern):
 def make_class_header(name: str, paths: list[str]) -> str:
     return f"""
     class {name} : public ShaderProgram {{
+        private:
+
+            // Keep the constructor private. I can't just mark it private because that causes errors when
+            // std::shared_ptr tries calling said constructor.
+            struct PrivateObj {{}};
+
         public:
-            {name}() : ShaderProgram(
-                {get_path_matching(paths, re.compile('\\.vert'))},
-                {get_path_matching(paths, re.compile('\\.frag'))}
+            {name}(PrivateObj privateObj) : ShaderProgram(
+                \"{get_path_matching(paths, re.compile('\\.vert'))}\",
+                \"{get_path_matching(paths, re.compile('\\.frag'))}\"
             ) {{ }}
+
+            // only useable as a shared pointer
+            static std::shared_ptr<{name}> make() {{
+                return std::make_shared<{name}>(PrivateObj{{}});
+            }}
     """
 
 
 def make_class_footer() -> str:
-    return "}"
+    return "};"
 
 
 def find_uniforms(file: str) -> list[Uniform]:
@@ -109,15 +96,14 @@ def find_uniforms(file: str) -> list[Uniform]:
     return out
 
 
+# provides a type-safe API wrapping that of the Shader class
 def make_setter(uniform: Uniform) -> str:
     glm_type: str = cvt_type(uniform.typename)
     func: str = ""
 
     if uniform.arraylen == -1:  # is not an array
-        setter_func, setter_args = get_opengl_setter(glm_type, "value")
-
-        func += f"void set_{uniform.varname}(const {glm_type}& val) {{"
-        func += f"    {setter_func}(this->getUniformLocation({uniform.varname}), {setter_args})"
+        func += f"void set{cvt_case(uniform.varname)}(const {glm_type}& val) {{"
+        func += f"    this->setUniform(\"{uniform.varname}\", val);"
         func +=  "}"
     else:
         raise NotImplementedError("Arrays in uniforms aren't implemented yet!")

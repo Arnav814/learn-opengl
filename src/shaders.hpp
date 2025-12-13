@@ -44,10 +44,6 @@ class ShaderProgram : public std::enable_shared_from_this<ShaderProgram> {
 
 	std::unordered_map<std::string, int> locationCache;
 
-	// Keep the constructor private. I can't just mark it private because that causes errors when
-	// std::shared_ptr tries calling said constructor.
-	struct PrivateObj {};
-
 	// Copying would break the RAII-based cleanup system. In other words, incorectly calling the
 	// destructor would delete the underlying glShaderProgram too early.
 	ShaderProgram(const ShaderProgram&) = delete;
@@ -63,100 +59,94 @@ class ShaderProgram : public std::enable_shared_from_this<ShaderProgram> {
  		if (this->locationCache.count(name) == 1) {
 			return this->locationCache[name];
 		} else {
-			int location = glGetUniformLocation(this->shaderProgram, name.c_str());
+			int location = this->getUniformLocation(name);
 			this->locationCache.insert({name, location});
 			return location;
 		}
 	}
 
 	// paths are loaded at runtime, so must be relative to the binary (or absolute)
-	static std::shared_ptr<ShaderProgram> make(const filesystem::path& vertexShaderPath,
-	                                           const filesystem::path& fragmentShaderPath) {
-		return std::make_shared<ShaderProgram>(vertexShaderPath, fragmentShaderPath, PrivateObj{});
+	ShaderProgram(const filesystem::path& vertexShaderPath,
+	              const filesystem::path& fragmentShaderPath);
+
+	~ShaderProgram() { glDeleteProgram(this->shaderProgram); }
+
+	void setUniform(const std::string& name, bool value) {
+		glUniform1i(this->getUniformLocation(name), value);
 	}
 
-	// only instantiateable as a shared pointer
-	ShaderProgram(const filesystem::path& vertexShaderPath,
-	              const filesystem::path& fragmentShaderPath, const PrivateObj obj);
+	void setUniform(const std::string& name, glm::bvec2 value) {
+		glUniform2i(this->getUniformLocation(name), value.x, value.y);
+	}
+
+	void setUniform(const std::string& name, glm::bvec3 value) {
+		glUniform3i(this->getUniformLocation(name), value.x, value.y,
+		            value.z);
+	}
+
+	void setUniform(const std::string& name, glm::bvec4 value) {
+		glUniform4i(this->getUniformLocation(name), value.x, value.y,
+		            value.z, value.w);
+	}
+
+	void setUniform(const std::string& name, int value) {
+		glUniform1i(this->getUniformLocation(name), value);
+	}
+
+	void setUniform(const std::string& name, glm::ivec2 value) {
+		glUniform2i(this->getUniformLocation(name), value.x, value.y);
+	}
+
+	void setUniform(const std::string& name, glm::ivec3 value) {
+		glUniform3i(this->getUniformLocation(name), value.x, value.y,
+		            value.z);
+	}
+
+	void setUniform(const std::string& name, glm::ivec4 value) {
+		glUniform4i(this->getUniformLocation(name), value.x, value.y,
+		            value.z, value.w);
+	}
+
+	void setUniform(const std::string& name, float value) {
+		glUniform1f(this->getUniformLocation(name), value);
+	}
+
+	void setUniform(const std::string& name, glm::vec2 value) {
+		glUniform2f(this->getUniformLocation(name), value.x, value.y);
+	}
+
+	void setUniform(const std::string& name, glm::vec3 value) {
+		glUniform3f(this->getUniformLocation(name), value.x, value.y,
+		            value.z);
+	}
+
+	void setUniform(const std::string& name, glm::vec4 value) {
+		glUniform4f(this->getUniformLocation(name), value.x, value.y,
+		            value.z, value.w);
+	}
+
+	void setUniform(const std::string& name, glm::mat2 value) {
+		glUniformMatrix2fv(this->getUniformLocation(name), 1, GL_FALSE,
+		                   glm::value_ptr(value));
+	}
+
+	void setUniform(const std::string& name, glm::mat3 value) {
+		glUniformMatrix3fv(this->getUniformLocation(name), 1, GL_FALSE,
+		                   glm::value_ptr(value));
+	}
+
+	void setUniform(const std::string& name, glm::mat4 value) {
+		glUniformMatrix4fv(this->getUniformLocation(name), 1, GL_FALSE,
+		                   glm::value_ptr(value));
+	}
 
   public:
 	// get a new pointer to this object
 	std::shared_ptr<ShaderProgram> getptr() { return shared_from_this(); }
 
-	~ShaderProgram() { glDeleteProgram(this->shaderProgram); }
-
 	void use() { glUseProgram(this->shaderProgram); }
 
 	void stopUsing() { glUseProgram(0); }
-
-	void setUniform(const std::string& name, bool value) {
-		glUniform1i(glGetUniformLocation(this->shaderProgram, name.c_str()), value);
-	}
-
-	void setUniform(const std::string& name, glm::bvec2 value) {
-		glUniform2i(glGetUniformLocation(this->shaderProgram, name.c_str()), value.x, value.y);
-	}
-
-	void setUniform(const std::string& name, glm::bvec3 value) {
-		glUniform3i(glGetUniformLocation(this->shaderProgram, name.c_str()), value.x, value.y,
-		            value.z);
-	}
-
-	void setUniform(const std::string& name, glm::bvec4 value) {
-		glUniform4i(glGetUniformLocation(this->shaderProgram, name.c_str()), value.x, value.y,
-		            value.z, value.w);
-	}
-
-	void setUniform(const std::string& name, int value) {
-		glUniform1i(glGetUniformLocation(this->shaderProgram, name.c_str()), value);
-	}
-
-	void setUniform(const std::string& name, glm::ivec2 value) {
-		glUniform2i(glGetUniformLocation(this->shaderProgram, name.c_str()), value.x, value.y);
-	}
-
-	void setUniform(const std::string& name, glm::ivec3 value) {
-		glUniform3i(glGetUniformLocation(this->shaderProgram, name.c_str()), value.x, value.y,
-		            value.z);
-	}
-
-	void setUniform(const std::string& name, glm::ivec4 value) {
-		glUniform4i(glGetUniformLocation(this->shaderProgram, name.c_str()), value.x, value.y,
-		            value.z, value.w);
-	}
-
-	void setUniform(const std::string& name, float value) {
-		glUniform1f(glGetUniformLocation(this->shaderProgram, name.c_str()), value);
-	}
-
-	void setUniform(const std::string& name, glm::vec2 value) {
-		glUniform2f(glGetUniformLocation(this->shaderProgram, name.c_str()), value.x, value.y);
-	}
-
-	void setUniform(const std::string& name, glm::vec3 value) {
-		glUniform3f(glGetUniformLocation(this->shaderProgram, name.c_str()), value.x, value.y,
-		            value.z);
-	}
-
-	void setUniform(const std::string& name, glm::vec4 value) {
-		glUniform4f(glGetUniformLocation(this->shaderProgram, name.c_str()), value.x, value.y,
-		            value.z, value.w);
-	}
-
-	void setUniform(const std::string& name, glm::mat2 value) {
-		glUniformMatrix2fv(glGetUniformLocation(this->shaderProgram, name.c_str()), 1, GL_FALSE,
-		                   glm::value_ptr(value));
-	}
-
-	void setUniform(const std::string& name, glm::mat3 value) {
-		glUniformMatrix3fv(glGetUniformLocation(this->shaderProgram, name.c_str()), 1, GL_FALSE,
-		                   glm::value_ptr(value));
-	}
-
-	void setUniform(const std::string& name, glm::mat4 value) {
-		glUniformMatrix4fv(glGetUniformLocation(this->shaderProgram, name.c_str()), 1, GL_FALSE,
-		                   glm::value_ptr(value));
-	}
 };
 
 } // namespace Shaders

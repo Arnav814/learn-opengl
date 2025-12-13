@@ -94,6 +94,11 @@ class Struct:
         state = pad_state(state, padding_for(state.offset, struct_alignment))
         return state
 
+# a template for creating setters for a given struct as a uniform
+@dataclass
+class StructUniformSetterTemplate:
+    pass
+
 class InvalidParse(Exception):
     pass
 

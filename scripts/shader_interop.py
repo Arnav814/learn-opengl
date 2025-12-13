@@ -77,8 +77,6 @@ def link_shader(files: list[ParsedFile], class_def: str) -> str:
     namespace: str = "Shaders"
     output += header(namespace)
 
-    output += "\n" + class_def + "\n"
-
     for file in joined_list:
 
         # so that different definitions in different files are caught
@@ -92,6 +90,8 @@ def link_shader(files: list[ParsedFile], class_def: str) -> str:
         output +=     f"#error \"Conflicting definitiions of struct {file[0]}\"\n"
         output +=    "#endif\n"
         output +=  "#endif\n"
+
+    output += "\n" + class_def + "\n"
 
     output += footer()
     return output

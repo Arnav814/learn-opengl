@@ -2,6 +2,7 @@
 #define SHADERCOMMON_HPP
 
 #include "../common.hpp"
+#include "../shaders.hpp"
 
 #include <glm/detail/qualifier.hpp>
 #include <glm/gtc/type_ptr.hpp>
