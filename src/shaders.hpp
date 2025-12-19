@@ -22,8 +22,6 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
-#include <boost/hana.hpp>
-
 #include <magic_enum/magic_enum.hpp>
 
 #include <filesystem>
