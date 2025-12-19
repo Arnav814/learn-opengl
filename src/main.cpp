@@ -1,10 +1,12 @@
 #include "camera.hpp"
 #include "common.hpp"
 #include "genTerrain.hpp"
+#include "lightCube.hpp"
 #include "lighting.hpp"
 #include "model.hpp"
 #include "object.hpp"
 #include "shaders.hpp"
+#include "terrain.hpp"
 #include "vertexData.hpp"
 
 #include <glad/gl.h>
@@ -81,20 +83,20 @@ int main(void) {
 	    .quadratic = 0.032,
 	};
 
-	const DirLight dirLight{
+	const Shaders::DirectionalLight dirLight{
 	    .direction = glm::normalize(glm::vec3(0.1, -1, 0.1)),
-	    .components = baseLightColor,
+	    SET_LIGHT_COMPONENTS(baseLightColor)
 	};
 
-	std::vector<PointLight> pointLights = getPointLights();
+	std::vector<Shaders::PointLight> pointLights = getPointLights();
 
 	glm::vec3 spotLightColor = glm::vec3(1, 1, 0.8); // yellowish
 	// translate to the appropriate position before use
-	const SpotLight baseSpotLight{
+	const Shaders::SpotLight baseSpotLight{
 	    .position = origin3d, // placeholder
 	    .direction = origin3d, // placeholder
-	    .components = baseLightColor * spotLightColor,
-	    .attenuation = baseAttenuation,
+	    SET_LIGHT_COMPONENTS(baseLightColor * spotLightColor),
+	    SET_LIGHT_ATTENUATION(baseAttenuation),
 	    .inCutoff = glm::cos(glm::radians(12.5f)),
 	    .outCutoff = glm::cos(glm::radians(17.5f)),
 
@@ -104,12 +106,9 @@ int main(void) {
 
 	std::print("Compiling shaders... ");
 	std::fflush(stdout);
-	std::shared_ptr objShader = ShaderProgram::make(SOURCE_DIR "./shaders/object.vert.glsl",
-	                                                SOURCE_DIR "./shaders/object.frag.glsl");
-	std::shared_ptr terrainShader = ShaderProgram::make(SOURCE_DIR "./shaders/terrain.vert.glsl",
-	                                                    SOURCE_DIR "./shaders/terrain.frag.glsl");
-	std::shared_ptr lightShader = ShaderProgram::make(SOURCE_DIR "./shaders/lightCube.vert.glsl",
-	                                                  SOURCE_DIR "./shaders/lightCube.frag.glsl");
+	Shaders::Object objShader = Shaders::ObjectImpl::make();
+	Shaders::Terrain terrainShader = Shaders::TerrainImpl::make();
+	Shaders::LightCube lightShader = Shaders::LightCubeImpl::make();
 	std::println("Done.");
 
 	// MODELS
@@ -220,21 +219,21 @@ int main(void) {
 
 		objShader->use();
 
-		dirLight.setStructUniform(*objShader, "dirLight");
+		objShader->setDirLight(dirLight);
 
 		for (uint i = 0; i < pointLights.size(); i++) {
 			pointLights[i].setStructUniform(*objShader, "pointLights", i);
 		}
 
 		// move spotlight to camera to act as a flashlight
-		SpotLight flashlight = baseSpotLight;
+		Shaders::SpotLight flashlight = baseSpotLight;
 		flashlight.position = camera.getPosition();
 		flashlight.direction = camera.getFront();
-		flashlight.setStructUniform(*objShader, "spotLight");
+		objShader->setSpotLight(flashlight);
 
 		terrainShader->use();
 
-		dirLight.setStructUniform(*terrainShader, "dirLight");
+		terrainShader->setDirLight(dirLight);
 
 		for (uint i = 0; i < pointLights.size(); i++) {
 			pointLights[i].setStructUniform(*terrainShader, "pointLights", i);
@@ -244,7 +243,7 @@ int main(void) {
 		flashlight = baseSpotLight;
 		flashlight.position = camera.getPosition();
 		flashlight.direction = camera.getFront();
-		flashlight.setStructUniform(*terrainShader, "spotLight");
+		terrainShader->setSpotLight(flashlight);
 
 		std::vector<SceneCascade> stack{};
 		recursivelyRender(scene, camera, stack);
@@ -255,7 +254,7 @@ int main(void) {
 		for (uint i = 0; i < pointLights.size(); i++) {
 			pointLights[i].vizualize(*lightShader, camera, lightVAO);
 		}
-		dirLight.vizualize(*lightShader, camera, lightVAO);
+		visualizeDirLight(dirLight, lightShader, camera, lightVAO);
 
 		lastFrameTime = secsSinceInit;
 		SDL_GL_SwapWindow(window);

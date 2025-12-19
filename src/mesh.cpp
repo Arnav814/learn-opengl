@@ -1,8 +1,11 @@
 #include "mesh.hpp"
 
+#include "object.hpp"
+#include "shaders/shaderCommon.hpp"
 #include "shaderStructs.hpp"
+#include "terrain.hpp"
 
-template <typename Vertex> void Mesh<Vertex>::setupMesh() {
+template <typename Vertex, Shaders::Shader Shader> void Mesh<Vertex, Shader>::setupMesh() {
 	glGenVertexArrays(1, &this->VAO);
 	glGenBuffers(1, &this->VBO);
 	glGenBuffers(1, &this->EBO);
@@ -35,8 +38,8 @@ template <typename Vertex> void Mesh<Vertex>::setupMesh() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-template <typename Vertex>
-void Mesh<Vertex>::render(const Camera& camera, const SceneCascade& cascade) {
+template <typename Vertex, Shaders::Shader Shader>
+void Mesh<Vertex, Shader>::render(const Camera& camera, const SceneCascade& cascade) {
 	// also include this node
 	SceneCascade combinedCascade = cascade + this->getNodeCascade();
 
@@ -53,7 +56,7 @@ void Mesh<Vertex>::render(const Camera& camera, const SceneCascade& cascade) {
 	this->shader->stopUsing();
 }
 
-template <typename Vertex> void Mesh<Vertex>::draw() {
+template <typename Vertex, Shaders::Shader Shader> void Mesh<Vertex, Shader>::draw() {
 	if constexpr (requires { Vertex::texCoords; }) {
 		// counters for number of diffuse/specular textures processed
 		uint diffuseN = 1;
@@ -106,5 +109,8 @@ uint loadTexture(const filesystem::path& path) {
 	return texture;
 }
 
-template class Mesh<TexVertex>;
-template class Mesh<ColorVertex>;
+// add more as needed
+template class Mesh<TexVertex, Shaders::Object>;
+template class Mesh<ColorVertex, Shaders::Object>;
+template class Mesh<TexVertex, Shaders::Terrain>;
+template class Mesh<ColorVertex, Shaders::Terrain>;

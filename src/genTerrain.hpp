@@ -3,6 +3,7 @@
 
 #include "common.hpp"
 #include "mesh.hpp"
+#include "terrain.hpp"
 
 #include <glm/geometric.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -26,6 +27,7 @@ class Terrain : public BaseSceneGraphObject {
 	float shininess;
 	DSColor bottomColor;
 	DSColor topColor;
+	Shaders::Terrain shader;
 	glm::vec2 size;
 	glm::uvec2 samples;
 	siv::PerlinNoise noise;
@@ -43,18 +45,19 @@ class Terrain : public BaseSceneGraphObject {
   public:
 	Terrain(const ulong& seed, const float& shininess, const DSColor& bottomColor,
 	        const DSColor& topColor, const glm::vec2& size, const glm::uvec2& samples,
-	        const ShaderPtr shader)
-	    : BaseSceneGraphObject(shader, glm::mat4(1)) {
+	        const Shaders::Terrain shader)
+	    : BaseSceneGraphObject(glm::mat4(1)) {
 		this->seed = seed;
 		this->shininess = shininess;
 		this->bottomColor = bottomColor;
 		this->topColor = topColor;
+		this->shader = shader;
 		this->size = size;
 		this->samples = samples;
 		this->noise = siv::PerlinNoise{seed};
 
-		Mesh<ColorVertex> terrain = this->getTerrain();
-		this->addChild(std::make_shared<Mesh<ColorVertex>>(terrain));
+		Mesh<ColorVertex, Shaders::Terrain> terrain = this->getTerrain();
+		this->addChild(std::make_shared<Mesh<ColorVertex, Shaders::Terrain>>(terrain));
 	}
 
 	virtual void render(const Camera& camera [[maybe_unused]],
@@ -64,7 +67,7 @@ class Terrain : public BaseSceneGraphObject {
 		std::println("{}Terrain:", std::string(SCENE_GRAPH_INDENT * cascade.recurseDepth, ' '));
 	}
 
-	Mesh<ColorVertex> getTerrain();
+	Mesh<ColorVertex, Shaders::Terrain> getTerrain();
 };
 
 #endif /* GENTERRAIN_HPP */

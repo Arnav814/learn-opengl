@@ -3,6 +3,7 @@
 
 #include "common.hpp"
 #include "mesh.hpp"
+#include "object.hpp"
 #include "sceneObject.hpp"
 #include "shaders.hpp"
 
@@ -20,6 +21,7 @@ void loadMaterialTextures(std::vector<Texture>& textures, const filesystem::path
 class Model : public BaseSceneGraphObject {
   private:
 	filesystem::path modelPath;
+	Shaders::Object shader;
 
 	void loadModel(const filesystem::path& path);
 
@@ -28,9 +30,10 @@ class Model : public BaseSceneGraphObject {
 	Mesh<TexVertex> processMesh(const aiMesh* mesh, const aiScene* scene);
 
   public:
-	Model(const filesystem::path& path, const std::shared_ptr<ShaderProgram> shader)
-	    : BaseSceneGraphObject(shader, glm::mat4(1)) {
+	Model(const filesystem::path& path, const Shaders::Object shader)
+	    : BaseSceneGraphObject(glm::mat4(1)) {
 		this->modelPath = path;
+		this->shader = shader;
 		this->loadModel(path);
 	}
 

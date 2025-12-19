@@ -45,7 +45,7 @@ struct SpotLight {
 	float outCutoff;
 };
 
-struct Material {
+struct TerrMaterial {
 	float shininess; // specular exponent
 };
 
@@ -55,7 +55,7 @@ uniform vec3 viewPos;
 uniform SpotLight spotLight;
 uniform DirectionalLight dirLight;
 uniform PointLight pointLights[POINT_LIGHT_COUNT];
-uniform Material material;
+uniform TerrMaterial material;
 
 vec3 calcDirLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 diffVal, vec3 specVal);
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffVal, vec3 specVal);

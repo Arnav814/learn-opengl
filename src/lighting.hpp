@@ -3,27 +3,29 @@
 
 #include "camera.hpp"
 #include "common.hpp"
+#include "lightCube.hpp"
+#include "object.hpp"
 #include "shaders.hpp"
 #include "shaderStructs.hpp"
 
 // renders a cube for the purpose of visualizing lights
-inline void renderLightCube(ShaderProgram& lightShader, Camera& camera, const uint VAO,
+inline void renderLightCube(Shaders::LightCube lightShader, Camera& camera, const uint VAO,
                             const glm::vec3& lightPos, const float scale,
                             const glm::vec3& lightColor) {
-	lightShader.use();
-	lightShader.setUniform("lightColor", lightColor);
+	lightShader->use();
+	lightShader->setLightColor(lightColor);
 
 	glm::mat4 obj2world = glm::mat4(1);
 	obj2world = glm::translate(obj2world, lightPos);
 	obj2world = glm::scale(obj2world, glm::vec3(scale));
-	lightShader.setUniform("obj2world", obj2world);
-	lightShader.setUniform("world2cam", camera.toCamSpace());
-	lightShader.setUniform("projection", camera.projectionMat());
+	lightShader->setObj2world(obj2world);
+	lightShader->setWorld2cam(camera.toCamSpace());
+	lightShader->setProjection(camera.projectionMat());
 
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
-	lightShader.stopUsing();
+	lightShader->stopUsing();
 }
 
 struct LightComponents {
@@ -32,13 +34,11 @@ struct LightComponents {
 	glm::vec3 specular;
 
 	LightComponents operator*(const glm::vec3& other) {
-		return LightComponents{this->ambient * other, this->diffuse * other,
-		                       this->specular * other};
+		return {this->ambient * other, this->diffuse * other, this->specular * other};
 	}
 
 	LightComponents operator*(const float scalar) {
-		return LightComponents{this->ambient * scalar, this->diffuse * scalar,
-		                       this->specular * scalar};
+		return {this->ambient * scalar, this->diffuse * scalar, this->specular * scalar};
 	}
 
 	LightComponents operator*=(const glm::vec3& other) {
@@ -56,6 +56,14 @@ struct LightComponents {
 	}
 };
 
+// to be used in named init lists
+#define SET_LIGHT_COMPONENTS(comp) \
+	.ambient = (comp).ambient, .diffuse = (comp).diffuse, .specular = (comp).specular
+
+template <typename T> LightComponents getComponents(const T& light) {
+	return {light.ambient, light.diffuse, light.specular};
+}
+
 // returns a color that can be used to vizualize the light
 glm::vec3 vizualizeLight(const LightComponents& comp);
 
@@ -65,8 +73,8 @@ struct AttenuationComponents {
 	float quadratic;
 
 	AttenuationComponents operator*(const AttenuationComponents& b) {
-		return AttenuationComponents{this->constant * b.constant, this->linear * b.linear,
-		                             this->quadratic * b.quadratic};
+		return {this->constant * b.constant, this->linear * b.linear,
+		        this->quadratic * b.quadratic};
 	}
 
 	AttenuationComponents operator*=(const float scalar) {
@@ -77,55 +85,27 @@ struct AttenuationComponents {
 	}
 };
 
-class DirLight {
-  public:
-	glm::vec3 direction;
-	LightComponents components;
+#define SET_LIGHT_ATTENUATION(att) \
+	.constant = att.constant, .linear = att.linear, .quadratic = att.quadratic
 
-	void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-	                      const int index = NOT_ARRAY) const;
+template <typename T> AttenuationComponents getAttenuation(const T& light) {
+	return {light.constant, light.linear, light.quadratic};
+}
 
-	// vizualize directional lights as a cube 100 units from the player's position
-	void vizualize(ShaderProgram& lightShader, Camera& camera, const uint VAO) const {
-		renderLightCube(lightShader, camera, VAO, -this->direction * 100.f + camera.getPosition(),
-		                1, vizualizeLight(this->components));
-	}
-};
+inline void visualizeDirLight(const Shaders::DirectionalLight& light, Shaders::LightCube shader,
+                              Camera& camera, const uint VAO) {
+	renderLightCube(shader, camera, VAO, -light.direction * 100.f + camera.getPosition(), 1,
+	                vizualizeLight(getComponents(light)));
+}
 
-class PointLight {
-  public:
-	glm::vec3 position;
-	LightComponents components;
-	AttenuationComponents attenuation;
+inline void vizualizePointLight(const Shaders::PointLight& light, Shaders::LightCube& shader,
+                                Camera& camera, const uint VAO) {
+	renderLightCube(shader, camera, VAO, light.position, 0.2, vizualizeLight(getComponents(light)));
+}
 
-	void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-	                      const int index = NOT_ARRAY) const;
-
-	void vizualize(ShaderProgram& lightShader, Camera& camera, const uint VAO) const {
-		renderLightCube(lightShader, camera, VAO, this->position, 0.2,
-		                vizualizeLight(this->components));
-	}
-};
-
-class SpotLight {
-  public:
-	glm::vec3 position;
-	glm::vec3 direction;
-	LightComponents components;
-	AttenuationComponents attenuation;
-
-	// cos of the inside cone's covered angle
-	float inCutoff;
-	// cos of the outside cone's covered angle
-	float outCutoff;
-
-	void setStructUniform(ShaderProgram& shader, const std::string& uniformName,
-	                      const int index = NOT_ARRAY) const;
-
-	void vizualize(ShaderProgram& lightShader, Camera& camera, const uint VAO) const {
-		renderLightCube(lightShader, camera, VAO, this->position, 0.2,
-		                vizualizeLight(this->components));
-	}
-};
+inline void vizualize(const Shaders::SpotLight& light, Shaders::LightCube& shader, Camera& camera,
+                      const uint VAO) {
+	renderLightCube(shader, camera, VAO, light.position, 0.2, vizualizeLight(getComponents(light)));
+}
 
 #endif /* LIGHTING_HPP */

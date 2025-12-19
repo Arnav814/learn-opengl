@@ -14,6 +14,10 @@
 
 namespace Shaders {
 
+// assumes T is a shared pointer to something
+template <typename T>
+concept Shader = std::is_base_of<ShaderProgram, typename T::element_type>::value;
+
 template <typename T, typename... U>
 concept IsAnyOf = (std::same_as<T, U> or ...);
 

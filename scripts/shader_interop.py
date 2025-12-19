@@ -2,6 +2,7 @@
 import re
 import sys
 from dataclasses import dataclass
+import hashlib
 import shader_structs
 from shader_structs import Struct
 import shader_uniforms
@@ -98,12 +99,14 @@ def link_shader(files: list[ParsedFile], class_def: str) -> str:
 
         # so that different definitions in different files are caught
         define_name: str = "STRUCT_HASH_" + re.sub(PASCAL_CASE, "_", file[0].name).upper()
-        struct_hash: int = hash(file[1])
+        struct_hash: int = int.from_bytes(hashlib.sha256(file[1].encode("utf-8")).digest())
+        struct_hash %= 2**64  # fit to size of a long
+
         output += f"\n#ifndef {define_name}\n"
         output +=   file[1]
-        output +=   f"\n#define {define_name} {struct_hash}\n"
+        output +=   f"\n#define {define_name} {hex(struct_hash)}\n"
         output +=  "#else\n"
-        output +=   f"#if {define_name} != {struct_hash}\n"
+        output +=   f"#if {define_name} != {hex(struct_hash)}\n"
         output +=     f"#error \"Conflicting definitions of struct {file[0].name}\"\n"
         output +=    "#endif\n"
         output +=  "#endif\n"

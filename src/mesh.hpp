@@ -2,6 +2,7 @@
 #define MESH_HPP
 
 #include "common.hpp"
+#include "object.hpp"
 #include "sceneObject.hpp"
 #include "shaders.hpp"
 
@@ -44,8 +45,9 @@ struct Texture {
 // loads the file at runtime, so the path should be absolute or relative to the final binary
 [[nodiscard]] uint loadTexture(const filesystem::path& path);
 
-template <typename Vertex> class Mesh : public BaseSceneGraphObject {
+template <typename Vertex, Shaders::Shader Shader> class Mesh : public BaseSceneGraphObject {
   private:
+	Shader shader;
 	std::vector<Vertex> verticies;
 	std::vector<uint> indicies;
 	std::vector<Texture> textures; // TODO: this is useless if we aren't using textured verticies
@@ -58,8 +60,9 @@ template <typename Vertex> class Mesh : public BaseSceneGraphObject {
   public:
 	Mesh<TexVertex>(const std::vector<Vertex>& verticies, const std::vector<uint>& indicies,
 	                const std::vector<Texture>& textures, const float shininess,
-	                const std::shared_ptr<ShaderProgram> shader)
-	    : BaseSceneGraphObject(shader, glm::mat4(1)) {
+	                const Shader shader)
+	    : BaseSceneGraphObject(glm::mat4(1)) {
+		this->shader = shader;
 		this->verticies = verticies;
 		this->indicies = indicies;
 		this->textures = textures;
@@ -69,8 +72,9 @@ template <typename Vertex> class Mesh : public BaseSceneGraphObject {
 	}
 
 	Mesh<ColorVertex>(const std::vector<Vertex>& verticies, const std::vector<uint>& indicies,
-	                  const float shininess, const std::shared_ptr<ShaderProgram> shader)
-	    : BaseSceneGraphObject(shader, glm::mat4(1)) {
+	                  const float shininess, const Shader shader)
+	    : BaseSceneGraphObject(glm::mat4(1)) {
+		this->shader = shader;
 		this->verticies = verticies;
 		this->indicies = indicies;
 		this->shininess = shininess;

@@ -3,12 +3,14 @@
 
 #include "camera.hpp"
 #include "common.hpp"
+#include "object.hpp"
 #include "shaders.hpp"
 
 #include <glm/gtx/string_cast.hpp>
 #include <glm/mat4x4.hpp>
 
 #include <memory>
+#include <print>
 #include <vector>
 
 #define SCENE_GRAPH_INDENT 4
@@ -87,13 +89,10 @@ class SceneGraphRoot : public BaseSceneGraphNode {
 // has to have a defined 3d position (not terrain)
 class BaseSceneGraphObject : public BaseSceneGraphNode {
   protected:
-	ShaderPtr shader;
 	glm::mat4 transform; // position of the object
 
   public:
-	BaseSceneGraphObject(const ShaderPtr shader, const glm::mat4& transform)
-	    : BaseSceneGraphNode() {
-		this->shader = shader;
+	BaseSceneGraphObject(const glm::mat4& transform) : BaseSceneGraphNode() {
 		assert(transform != glm::mat4()); // can't have an empty (all 0s) matrix
 		this->transform = transform;
 	}

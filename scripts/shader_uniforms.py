@@ -37,7 +37,7 @@ def generate_class(file_contents: str, input_filenames: list[str], structs: list
     for uniform in uniforms:
         out += expose_setter(uniform)
 
-    out += make_class_footer()
+    out += make_class_footer(name)
 
     return out
 
@@ -70,7 +70,7 @@ def get_path_matching(paths: list[str], regex: re.Pattern):
 
 def make_class_header(name: str, paths: list[str]) -> str:
     return f"""
-    class {name} : public ShaderProgram {{
+    class {name+'Impl'} : public ShaderProgram {{
         private:
 
             // Keep the constructor private. I can't just mark it private because that causes errors when
@@ -78,20 +78,22 @@ def make_class_header(name: str, paths: list[str]) -> str:
             struct PrivateObj {{}};
 
         public:
-            {name}(PrivateObj privateObj [[maybe_unused]]) : ShaderProgram(
+            using ShaderProgram::setUniform; // see https://stackoverflow.com/a/35870151
+
+            {name+'Impl'}(PrivateObj privateObj [[maybe_unused]]) : ShaderProgram(
                 \"{get_path_matching(paths, re.compile('\\.vert'))}\",
                 \"{get_path_matching(paths, re.compile('\\.frag'))}\"
             ) {{ }}
 
             // only useable as a shared pointer
-            static std::shared_ptr<{name}> make() {{
-                return std::make_shared<{name}>(PrivateObj{{}});
+            static std::shared_ptr<{name+'Impl'}> make() {{
+                return std::make_shared<{name+'Impl'}>(PrivateObj{{}});
             }}
     """
 
 
-def make_class_footer() -> str:
-    return "};"
+def make_class_footer(name: str) -> str:
+    return f"}};\ntypedef std::shared_ptr<{name+'Impl'}> {name};"
 
 
 def find_uniforms(file: str) -> list[Uniform]:

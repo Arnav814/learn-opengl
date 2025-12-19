@@ -9,7 +9,7 @@ glm::vec3 Terrain::pointFromData(const boost::multi_array<float, 2>& data, const
 	return glm::vec3(point.x * scale.x, value, point.y * scale.y);
 }
 
-Mesh<ColorVertex> Terrain::getTerrain() {
+Mesh<ColorVertex, Shaders::Terrain> Terrain::getTerrain() {
 	glm::vec2 scale = glm::vec2(this->size.x / this->samples.x, this->size.y / this->samples.y);
 	boost::multi_array<float, 2> terrainData(boost::extents[this->samples.x][this->samples.y]);
 
@@ -83,5 +83,5 @@ Mesh<ColorVertex> Terrain::getTerrain() {
 		}
 	}
 
-	return Mesh<ColorVertex>{verticies, indicies, this->shininess, this->shader};
+	return Mesh<ColorVertex, Shaders::Terrain>{verticies, indicies, this->shininess, this->shader};
 }
