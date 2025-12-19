@@ -1,5 +1,7 @@
 import re
 from dataclasses import dataclass
+import shader_structs
+from shader_structs import Struct
 
 PRIMATIVE_TYPES: set[str] = {"bool", "int", "uint", "float", "double"}
 
@@ -18,14 +20,23 @@ def cvt_case(camel_case: str) -> str:
 
 
 # generates the C++ code for the shader subclass
-def generate_class(file_contents: str, input_filenames: list[str]) -> str:
+def generate_class(file_contents: str, input_filenames: list[str], structs: list[Struct]) -> str:
     file_name = input_filenames[0].split("/")[-1].split(".")[0]
     name: str = cvt_case(file_name)
 
     uniforms = find_uniforms(file_contents)
     out = make_class_header(name, input_filenames)
+
+    out += "\nprivate:\n"
+
+    for struct in structs:
+        out += make_struct_setter(struct)
+
+    out += "\npublic:\n"
+
     for uniform in uniforms:
-        out += make_setter(uniform)
+        out += expose_setter(uniform)
+
     out += make_class_footer()
 
     return out
@@ -67,7 +78,7 @@ def make_class_header(name: str, paths: list[str]) -> str:
             struct PrivateObj {{}};
 
         public:
-            {name}(PrivateObj privateObj) : ShaderProgram(
+            {name}(PrivateObj privateObj [[maybe_unused]]) : ShaderProgram(
                 \"{get_path_matching(paths, re.compile('\\.vert'))}\",
                 \"{get_path_matching(paths, re.compile('\\.frag'))}\"
             ) {{ }}
@@ -96,8 +107,17 @@ def find_uniforms(file: str) -> list[Uniform]:
     return out
 
 
-# provides a type-safe API wrapping that of the Shader class
-def make_setter(uniform: Uniform) -> str:
+def make_struct_setter(struct: Struct) -> str:
+    func: str = f"void setUniform(const std::string& name, const {struct.name}& val) {{\n"
+    for i in struct.contents:
+        func += f"\tthis->setUniform(name + \".{i[1]}\", val.{i[1]});\n"
+    func += "}\n"
+    return func
+
+
+# provides a type-safe API wrapping that of the internal one that allows
+# arbitrary names and types
+def expose_setter(uniform: Uniform) -> str:
     glm_type: str = cvt_type(uniform.typename)
     func: str = ""
 

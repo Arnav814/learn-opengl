@@ -1,7 +1,6 @@
 #ifndef SHADERS_HPP
 #define SHADERS_HPP
 #include "common.hpp"
-#include "object.hpp"
 
 #include <glad/gl.h>
 
@@ -29,7 +28,6 @@
 
 #include <filesystem>
 #include <memory>
-#include <print>
 #include <string>
 
 namespace Shaders {
@@ -71,71 +69,71 @@ class ShaderProgram : public std::enable_shared_from_this<ShaderProgram> {
 
 	~ShaderProgram() { glDeleteProgram(this->shaderProgram); }
 
-	void setUniform(const std::string& name, bool value) {
+	void setUniform(const std::string& name, const bool value) {
 		glUniform1i(this->getUniformLocation(name), value);
 	}
 
-	void setUniform(const std::string& name, glm::bvec2 value) {
+	void setUniform(const std::string& name, const glm::bvec2 value) {
 		glUniform2i(this->getUniformLocation(name), value.x, value.y);
 	}
 
-	void setUniform(const std::string& name, glm::bvec3 value) {
+	void setUniform(const std::string& name, const glm::bvec3 value) {
 		glUniform3i(this->getUniformLocation(name), value.x, value.y,
 		            value.z);
 	}
 
-	void setUniform(const std::string& name, glm::bvec4 value) {
+	void setUniform(const std::string& name, const glm::bvec4 value) {
 		glUniform4i(this->getUniformLocation(name), value.x, value.y,
 		            value.z, value.w);
 	}
 
-	void setUniform(const std::string& name, int value) {
+	void setUniform(const std::string& name, const int value) {
 		glUniform1i(this->getUniformLocation(name), value);
 	}
 
-	void setUniform(const std::string& name, glm::ivec2 value) {
+	void setUniform(const std::string& name, const glm::ivec2 value) {
 		glUniform2i(this->getUniformLocation(name), value.x, value.y);
 	}
 
-	void setUniform(const std::string& name, glm::ivec3 value) {
+	void setUniform(const std::string& name, const glm::ivec3 value) {
 		glUniform3i(this->getUniformLocation(name), value.x, value.y,
 		            value.z);
 	}
 
-	void setUniform(const std::string& name, glm::ivec4 value) {
+	void setUniform(const std::string& name, const glm::ivec4 value) {
 		glUniform4i(this->getUniformLocation(name), value.x, value.y,
 		            value.z, value.w);
 	}
 
-	void setUniform(const std::string& name, float value) {
+	void setUniform(const std::string& name, const float value) {
 		glUniform1f(this->getUniformLocation(name), value);
 	}
 
-	void setUniform(const std::string& name, glm::vec2 value) {
+	void setUniform(const std::string& name, const glm::vec2 value) {
 		glUniform2f(this->getUniformLocation(name), value.x, value.y);
 	}
 
-	void setUniform(const std::string& name, glm::vec3 value) {
+	void setUniform(const std::string& name, const glm::vec3 value) {
 		glUniform3f(this->getUniformLocation(name), value.x, value.y,
 		            value.z);
 	}
 
-	void setUniform(const std::string& name, glm::vec4 value) {
+	void setUniform(const std::string& name, const glm::vec4 value) {
 		glUniform4f(this->getUniformLocation(name), value.x, value.y,
 		            value.z, value.w);
 	}
 
-	void setUniform(const std::string& name, glm::mat2 value) {
+	void setUniform(const std::string& name, const glm::mat2 value) {
 		glUniformMatrix2fv(this->getUniformLocation(name), 1, GL_FALSE,
 		                   glm::value_ptr(value));
 	}
 
-	void setUniform(const std::string& name, glm::mat3 value) {
+	void setUniform(const std::string& name, const glm::mat3 value) {
 		glUniformMatrix3fv(this->getUniformLocation(name), 1, GL_FALSE,
 		                   glm::value_ptr(value));
 	}
 
-	void setUniform(const std::string& name, glm::mat4 value) {
+	void setUniform(const std::string& name, const glm::mat4 value) {
 		glUniformMatrix4fv(this->getUniformLocation(name), 1, GL_FALSE,
 		                   glm::value_ptr(value));
 	}

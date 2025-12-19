@@ -5,6 +5,7 @@ import sys
 from typing import Callable
 from dataclasses import dataclass
 
+
 def next_multiple(initial: int, multiple_of: int) -> int:
     remainder: int = initial % multiple_of
     if remainder == 0:
@@ -14,9 +15,11 @@ def next_multiple(initial: int, multiple_of: int) -> int:
         # go back to the previous multiple, then jump forwards one step
         return initial - remainder + multiple_of
 
+
 # figures out how much padding is needed
 def padding_for(offset: int, alignment: int) -> int:
     return next_multiple(offset, alignment) - offset
+
 
 def pad_state(state: State, padding: int) -> State:
     # keeps things cleaner
@@ -26,11 +29,13 @@ def pad_state(state: State, padding: int) -> State:
         state.code += f"pad(output, {padding});"
     return state
 
+
 # the code that's been generated so far
 @dataclass
 class State:
     offset: int
     code: str
+
 
 @dataclass
 class BasicSerializable:
@@ -46,6 +51,7 @@ class BasicSerializable:
         state.offset += self.size
         state.code += f"serialize(output, {name});"
         return state
+
 
 @dataclass
 class Array:
@@ -67,8 +73,10 @@ class Array:
 
         return state
 
+
 @dataclass
 class Struct:
+    name: str
     contents: list[tuple[BasicSerializable | Array | Struct, str]]
 
     def get_alignment(self) -> int:
@@ -94,13 +102,10 @@ class Struct:
         state = pad_state(state, padding_for(state.offset, struct_alignment))
         return state
 
-# a template for creating setters for a given struct as a uniform
-@dataclass
-class StructUniformSetterTemplate:
-    pass
 
 class InvalidParse(Exception):
     pass
+
 
 def parse_scalar(typename: str) -> BasicSerializable:
     match typename:
@@ -117,6 +122,7 @@ def parse_scalar(typename: str) -> BasicSerializable:
         case _:
             raise InvalidParse()
 
+
 VECTOR_PARSE: re.Pattern = re.compile(r"(?P<type>[biufd])?vec(?P<dims>[234])")
 GLM_NAMESPACE: re.Pattern = re.compile(r"^glm::")
 def parse_vector(typename: str) -> BasicSerializable:
@@ -124,7 +130,7 @@ def parse_vector(typename: str) -> BasicSerializable:
     vec_match: re.Match | None = re.fullmatch(VECTOR_PARSE, typename)
     if vec_match is None:
         raise InvalidParse()
-    
+
     type_char: str | None = vec_match.group("type")
     if type_char is None:
         type_char = 'f' # assume float
@@ -169,8 +175,9 @@ STRUCT_PARSE: re.Pattern = \
 VAR_PARSE: re.Pattern = \
     re.compile(r"(?P<type>[^\s\{\}\]\[\]\|\\\;]+)\s*(?P<var>[^[^\s\{\}\]\[\]\|\\\;]+)\s*(\[(?P<length>\d+)\])?\s*;", re.DOTALL)
 
+
 # does NOT update the struct table by itself
-def parse_struct(struct_def: str, struct_table: dict[str, Struct]) -> tuple[Struct, str]:
+def parse_struct(struct_def: str, struct_table: dict[str, Struct]) -> Struct:
     # comments are already removed
     regexed: re.Match | None = re.fullmatch(STRUCT_PARSE, struct_def)
     if regexed is None:
@@ -189,18 +196,19 @@ def parse_struct(struct_def: str, struct_table: dict[str, Struct]) -> tuple[Stru
 
         variables.append((actual_type, match.group("var")))
 
-    return Struct(variables), regexed.group("name")
+    return Struct(regexed.group("name"), variables)
 
-def generate_setter(struct: Struct, name: str) -> str:
+
+def generate_setter(struct: Struct) -> str:
     # do all the parsing
     state: State = struct.add_to("val", State(0, ""))
 
-    output_code: str = f"template<> consteval uint std140sizeofImpl<{name}>() {{return {state.offset};}}\n"
+    output_code: str = f"template<> consteval uint std140sizeofImpl<{struct.name}>() {{return {state.offset};}}\n"
 
-    output_code += f"inline void std140serialize(std::vector<std::byte>& output, const {name}& val) {{\n"
+    output_code += f"inline void std140serialize(std::vector<std::byte>& output, const {struct.name}& val) {{\n"
     output_code += "uint initialSize = output.size();\n"
     output_code += state.code
-    output_code += f"assert(output.size() - initialSize  == std140sizeof({name}));"
+    output_code += f"assert(output.size() - initialSize  == std140sizeof({struct.name}));"
     output_code += "}"
 
     return output_code
@@ -219,21 +227,22 @@ def convert_struct(struct: str) -> str:
 
     return struct
 
-# generates the code for a struct, returns name and the code
+# generates the code for a struct, returns the code
 # updates the struct table automatically
-def process_struct(struct_def: str, struct_table: dict[str, Struct]) -> tuple[str, str]:
+def process_struct(struct_def: str, struct_table: dict[str, Struct]) -> tuple[Struct, str]:
     struct_def = convert_struct(struct_def)
-    struct, name = parse_struct(struct_def, struct_table)
-    struct_table[name] = struct
-    setter: str = generate_setter(struct, name)
-    return name, struct_def + "\n" + setter
+    struct = parse_struct(struct_def, struct_table)
+    struct_table[struct.name] = struct
+    setter: str = generate_setter(struct)
+    return struct, struct_def + "\n\n" + setter # the \n\n is used for seperation later
 
 if __name__ == "__main__":
-    struct, name = parse_struct("""struct ExampleLightThingy {
-	vec3 direction;
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
+    struct = parse_struct("""
+struct ExampleLightThingy {
+    vec3 direction;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
 };""", {})
-    print(generate_setter(struct, name), end="")
+    print(generate_setter(struct), end="")
 
