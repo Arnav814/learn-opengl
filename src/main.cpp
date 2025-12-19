@@ -220,10 +220,7 @@ int main(void) {
 		objShader->use();
 
 		objShader->setDirLight(dirLight);
-
-		for (uint i = 0; i < pointLights.size(); i++) {
-			pointLights[i].setStructUniform(*objShader, "pointLights", i);
-		}
+		objShader->setPointLights(pointLights);
 
 		// move spotlight to camera to act as a flashlight
 		Shaders::SpotLight flashlight = baseSpotLight;
@@ -234,10 +231,7 @@ int main(void) {
 		terrainShader->use();
 
 		terrainShader->setDirLight(dirLight);
-
-		for (uint i = 0; i < pointLights.size(); i++) {
-			pointLights[i].setStructUniform(*terrainShader, "pointLights", i);
-		}
+		terrainShader->setPointLights(pointLights);
 
 		// move spotlight to camera to act as a flashlight
 		flashlight = baseSpotLight;
@@ -252,7 +246,8 @@ int main(void) {
 		objShader->stopUsing();
 
 		for (uint i = 0; i < pointLights.size(); i++) {
-			pointLights[i].vizualize(*lightShader, camera, lightVAO);
+			vizualizePointLight(pointLights[i], lightShader, camera, lightVAO);
+
 		}
 		visualizeDirLight(dirLight, lightShader, camera, lightVAO);
 

@@ -27,7 +27,7 @@ class Model : public BaseSceneGraphObject {
 
 	void processNode(const aiNode* node, const aiScene* scene);
 
-	Mesh<TexVertex> processMesh(const aiMesh* mesh, const aiScene* scene);
+	Mesh<TexVertex, Shaders::Object> processMesh(const aiMesh* mesh, const aiScene* scene);
 
   public:
 	Model(const filesystem::path& path, const Shaders::Object shader)

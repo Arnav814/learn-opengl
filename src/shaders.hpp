@@ -57,7 +57,7 @@ class ShaderProgram : public std::enable_shared_from_this<ShaderProgram> {
 		if (this->locationCache.count(name) == 1) {
 			return this->locationCache[name];
 		} else {
-			int location = this->getUniformLocation(name);
+			int location = glGetUniformLocation(this->shaderProgram, name.c_str());
 			this->locationCache.insert({name, location});
 			return location;
 		}

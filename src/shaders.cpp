@@ -8,7 +8,10 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <print>
 #include <regex>
+
+namespace Shaders {
 
 // converts an enum shader type to the appropriate opengl macro
 static uint enum2gl(ShaderType asEnum) {
@@ -28,8 +31,7 @@ static std::string readFile(const filesystem::path& path) {
 }
 
 ShaderProgram::ShaderProgram(const filesystem::path& vertexShaderPath,
-                             const filesystem::path& fragmentShaderPath,
-                             const PrivateObj obj [[maybe_unused]]) {
+                             const filesystem::path& fragmentShaderPath) {
 	std::string vertexShaderSrc = readFile(vertexShaderPath);
 	std::string fragmentShaderSrc = readFile(fragmentShaderPath);
 
@@ -129,5 +131,7 @@ uint ShaderProgram::compileShader(const std::string& source, const filesystem::p
 	}
 	return shader;
 }
+
+} // namespace Shaders
 
 #endif /* SHADERS_CPP */

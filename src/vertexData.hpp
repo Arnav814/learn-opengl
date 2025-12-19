@@ -8,6 +8,6 @@
 
 std::vector<float> getVertexData();
 
-std::vector<PointLight> getPointLights();
+std::vector<Shaders::PointLight> getPointLights();
 
 #endif /* VERTEXDATA_HPP */

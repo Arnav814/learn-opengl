@@ -52,7 +52,7 @@ std::vector<float> getVertexData() {
 	return data;
 }
 
-std::vector<PointLight> getPointLights() {
+std::vector<Shaders::PointLight> getPointLights() {
 	LightComponents baseComponents{
 	    .ambient = glm::vec3(0.1),
 	    .diffuse = glm::vec3(0.5),
@@ -79,13 +79,13 @@ std::vector<PointLight> getPointLights() {
 	    glm::vec3(0.0f, 0.0f, -3.0f) //
 	};
 
-	std::vector<PointLight> data{};
+	std::vector<Shaders::PointLight> data{};
 	data.reserve(positions.size());
 	for (uint i = 0; i < positions.size(); i++) {
-		data.push_back(PointLight{
+		data.push_back(Shaders::PointLight{
 		    .position = positions[i],
-		    .components = baseComponents * colors[i],
-		    .attenuation = baseAttenuation,
+			SET_LIGHT_COMPONENTS(baseComponents * colors[i]),
+			SET_LIGHT_ATTENUATION(baseAttenuation),
 		});
 	}
 

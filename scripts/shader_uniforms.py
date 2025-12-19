@@ -100,19 +100,23 @@ def find_uniforms(file: str) -> list[Uniform]:
     out: list[Uniform] = []
     matches = re.finditer(FIND_UNIFORMS, file)
     match: re.Match
+
     for match in matches:
-        out.append(
-            Uniform(
-                match.group("type"), match.group("name"),
-                int(match.group("length"))
-                if "length" in match.groups() else -1))
+        length_group = match.group("length")
+        length: int = int(length_group) if length_group is not None else -1
+        out.append(Uniform(match.group("type"), match.group("name"), length))
+
     return out
 
 
 def make_struct_setter(struct: Struct) -> str:
     func: str = f"void setUniform(const std::string& name, const {struct.name}& val) {{\n"
+
     for i in struct.contents:
+        if isinstance(i[0], shader_structs.Array):
+            raise NotImplementedError("Arrays in structs in uniforms aren't implemented yet!")
         func += f"\tthis->setUniform(name + \".{i[1]}\", val.{i[1]});\n"
+
     func += "}\n"
     return func
 
@@ -124,10 +128,25 @@ def expose_setter(uniform: Uniform) -> str:
     func: str = ""
 
     if uniform.arraylen == -1:  # is not an array
-        func += f"void set{cvt_case(uniform.varname)}(const {glm_type}& val) {{"
-        func += f"    this->setUniform(\"{uniform.varname}\", val);"
-        func +=  "}"
+        func += f"void set{cvt_case(uniform.varname)}(const {glm_type}& val) {{\n"
+        func += f"    this->setUniform(\"{uniform.varname}\", val);\n"
+        func +=  "}\n"
     else:
-        raise NotImplementedError("Arrays in uniforms aren't implemented yet!")
+        # generate a setter by index and a std::span setter
+        func += f"void set{cvt_case(uniform.varname)}(const {glm_type}& val, const uint index) {{\n"
+        func += f"    if (index >= {uniform.arraylen})\n"
+        func += "        throw std::out_of_range(std::format(" \
+            f"\"Attempted to set uniform {uniform.varname} " \
+            f"of length {uniform.arraylen} at index {{}}\", index));\n"
+        func += f"    this->setUniform(\"{uniform.varname}[\" + std::to_string(index) + \"]\", val);\n"
+        func += "}\n"
+
+        func += f"void set{cvt_case(uniform.varname)}(const std::span<{glm_type}>& val) {{\n"
+        func += f"    if (val.size() != {uniform.arraylen})\n"
+        func += f"        throw std::out_of_range(std::format(\"Tried to set uniform {uniform.varname} " \
+            f"with length {uniform.arraylen} with an std::span of size {{}}\", val.size()));\n"
+        func += f"    for (uint i = 0; i < {uniform.arraylen}; i++) {{\n"
+        func += f"        this->set{cvt_case(uniform.varname)}(val[i], i);\n"
+        func += "    }\n}\n"
 
     return func

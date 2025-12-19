@@ -1,6 +1,7 @@
 #include "model.hpp"
 
 #include "assimp2glm.hpp"
+#include "object.hpp"
 
 void loadMaterialTextures(std::vector<Texture>& textures, const filesystem::path& dirPath,
                           const aiMaterial* mat, const aiTextureType type,
@@ -45,7 +46,8 @@ void Model::processNode(const aiNode* node, const aiScene* scene) {
 	// process this node's meshes
 	for (uint i = 0; i < node->mNumMeshes; i++) {
 		const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		this->addChild(std::make_shared<Mesh<TexVertex>>(this->processMesh(mesh, scene)));
+		this->addChild(
+		    std::make_shared<Mesh<TexVertex, Shaders::Object>>(this->processMesh(mesh, scene)));
 	}
 
 	// recurse into child nodes
@@ -54,7 +56,7 @@ void Model::processNode(const aiNode* node, const aiScene* scene) {
 	}
 }
 
-Mesh<TexVertex> Model::processMesh(const aiMesh* mesh, const aiScene* scene) {
+Mesh<TexVertex, Shaders::Object> Model::processMesh(const aiMesh* mesh, const aiScene* scene) {
 	std::vector<TexVertex> verticies;
 	std::vector<uint> indicies;
 	std::vector<Texture> textures;
