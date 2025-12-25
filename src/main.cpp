@@ -144,6 +144,8 @@ int main(void) {
 	std::array<bool, SDL_SCANCODE_COUNT> scancodeMap{false};
 
 	bool isFullscreen = false;
+	// switch from interacting with the GUI to the camera
+	bool cameraInteraction = true;
 
 	bool exit = false;
 	bool resized = true; // populate the perspective matrix
@@ -159,18 +161,26 @@ int main(void) {
 			case SDL_EVENT_QUIT: exit = 1; break;
 			case SDL_EVENT_KEY_DOWN: scancodeMap.at(event.key.scancode) = true; break;
 			case SDL_EVENT_KEY_UP:
+				scancodeMap.at(event.key.scancode) = false;
 				switch (event.key.key) {
 				case SDLK_ESCAPE: exit = true; break;
 				case SDLK_T:
 					isFullscreen = not isFullscreen; // toggle fullscreen
 					SDL_SetWindowFullscreen(sdl.window, isFullscreen);
 					break;
+				case SDLK_G:
+					cameraInteraction = not cameraInteraction;
+					CALL_SDL(SDL_SetWindowRelativeMouseMode(sdl.window, cameraInteraction));
+					break;
 				}
-				scancodeMap.at(event.key.scancode) = false;
 				break;
 			case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: resized = true; break;
-			case SDL_EVENT_MOUSE_MOTION: camera.rotateBy(event.motion); break;
-			case SDL_EVENT_MOUSE_WHEEL: camera.zoomBy(event.wheel); break;
+			case SDL_EVENT_MOUSE_MOTION:
+				if (cameraInteraction) camera.rotateBy(event.motion);
+				break;
+			case SDL_EVENT_MOUSE_WHEEL:
+				if (cameraInteraction) camera.zoomBy(event.wheel);
+				break;
 			}
 			ImGui_ImplSDL3_ProcessEvent(&event);
 		}
@@ -178,13 +188,14 @@ int main(void) {
 		imguiFrameStart();
 		ImGui::ShowDemoWindow();
 
-		camera.moveBy(scancodeMap[SDL_SCANCODE_W], //
-		              scancodeMap[SDL_SCANCODE_S], //
-		              scancodeMap[SDL_SCANCODE_A], //
-		              scancodeMap[SDL_SCANCODE_D], //
-		              scancodeMap[SDL_SCANCODE_R], //
-		              scancodeMap[SDL_SCANCODE_F], //
-		              deltaTime);
+		if (cameraInteraction)
+			camera.moveBy(scancodeMap[SDL_SCANCODE_W], //
+			              scancodeMap[SDL_SCANCODE_S], //
+			              scancodeMap[SDL_SCANCODE_A], //
+			              scancodeMap[SDL_SCANCODE_D], //
+			              scancodeMap[SDL_SCANCODE_R], //
+			              scancodeMap[SDL_SCANCODE_F], //
+			              deltaTime);
 
 		if (resized) {
 			glm::ivec2 newSize = sdl.getWindowSize();

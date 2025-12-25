@@ -14,7 +14,7 @@ void SDLData::setup(const glm::uvec2 initSize) {
 	this->window = SDL_CreateWindow("[glad] GL with SDL", this->initSize.x, this->initSize.y,
 	                                SDL_WINDOW_OPENGL);
 	CALL_SDL(SDL_SetWindowResizable(window, true));
-	// CALL_SDL(SDL_SetWindowRelativeMouseMode(window, true));
+	CALL_SDL(SDL_SetWindowRelativeMouseMode(window, true));
 
 	this->context = SDL_GL_CreateContext(window);
 
