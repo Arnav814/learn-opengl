@@ -56,7 +56,7 @@ int main(void) {
 	SDL_Window* window =
 	    SDL_CreateWindow("[glad] GL with SDL", INIT_WIDTH, INIT_HEIGHT, SDL_WINDOW_OPENGL);
 	CALL_SDL(SDL_SetWindowResizable(window, true));
-	CALL_SDL(SDL_SetWindowRelativeMouseMode(window, true));
+	// CALL_SDL(SDL_SetWindowRelativeMouseMode(window, true));
 
 	SDL_GLContext context = SDL_GL_CreateContext(window);
 
@@ -162,6 +162,10 @@ int main(void) {
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+	// IMGUI
+
+	makeImGuiContext(context, window);
+
 	// RENDER LOOP
 
 	// map for if each scancode is pressed
@@ -196,7 +200,11 @@ int main(void) {
 			case SDL_EVENT_MOUSE_MOTION: camera.rotateBy(event.motion); break;
 			case SDL_EVENT_MOUSE_WHEEL: camera.zoomBy(event.wheel); break;
 			}
+			ImGui_ImplSDL3_ProcessEvent(&event);
 		}
+
+		imguiFrameStart();
+		ImGui::ShowDemoWindow();
 
 		camera.moveBy(scancodeMap[SDL_SCANCODE_W], //
 		              scancodeMap[SDL_SCANCODE_S], //
@@ -252,12 +260,15 @@ int main(void) {
 		visualizeDirLight(dirLight, lightShader, camera, lightVAO);
 
 		lastFrameTime = secsSinceInit;
+		imguiRender();
 		SDL_GL_SwapWindow(window);
 		SDL_Delay(1'000 / 60);
 	}
 
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &lightVBO);
+
+	cleanupImGuiContext();
 
 	CALL_SDL(SDL_GL_DestroyContext(context));
 	SDL_DestroyWindow(window);

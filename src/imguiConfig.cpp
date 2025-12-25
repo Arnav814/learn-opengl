@@ -1,6 +1,6 @@
 #include "imguiConfig.hpp"
 
-void makeContext(SDL_GLContext glContext, SDL_Window* window) {
+void makeImGuiContext(SDL_GLContext glContext, SDL_Window* window) {
 	// copied in part from
 	// https://github.com/ocornut/imgui/blob/master/examples/example_sdl3_opengl3/main.cpp
 	IMGUI_CHECKVERSION();
@@ -23,8 +23,19 @@ void makeContext(SDL_GLContext glContext, SDL_Window* window) {
 	ImGui_ImplOpenGL3_Init("#version 330");
 }
 
-void deleteContext() {
+void cleanupImGuiContext() {
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplSDL3_Shutdown();
 	ImGui::DestroyContext();
+}
+
+void imguiFrameStart() {
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
+	ImGui::NewFrame();
+}
+
+void imguiRender() {
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

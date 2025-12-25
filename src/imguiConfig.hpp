@@ -7,8 +7,12 @@
 #include <imgui_impl_sdl3.h>
 
 // setup ImGui
-void makeContext(SDL_GLContext glContext, SDL_Window* window);
+void makeImGuiContext(SDL_GLContext glContext, SDL_Window* window);
 
-void deleteContext();
+void cleanupImGuiContext();
+
+void imguiFrameStart();
+
+void imguiRender();
 
 #endif /* IMGUICONFIG_HPP */
