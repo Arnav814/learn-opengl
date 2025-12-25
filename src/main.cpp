@@ -1,6 +1,7 @@
 #include "camera.hpp"
 #include "common.hpp"
 #include "genTerrain.hpp"
+#include "imguiConfig.hpp"
 #include "lightCube.hpp"
 #include "lighting.hpp"
 #include "model.hpp"
@@ -22,6 +23,8 @@
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
+
+#include <imgui.h>
 
 #include <cmath>
 #include <print>
@@ -83,10 +86,8 @@ int main(void) {
 	    .quadratic = 0.032,
 	};
 
-	const Shaders::DirectionalLight dirLight{
-	    .direction = glm::normalize(glm::vec3(0.1, -1, 0.1)),
-	    SET_LIGHT_COMPONENTS(baseLightColor)
-	};
+	const Shaders::DirectionalLight dirLight{.direction = glm::normalize(glm::vec3(0.1, -1, 0.1)),
+	                                         SET_LIGHT_COMPONENTS(baseLightColor)};
 
 	std::vector<Shaders::PointLight> pointLights = getPointLights();
 
@@ -247,7 +248,6 @@ int main(void) {
 
 		for (uint i = 0; i < pointLights.size(); i++) {
 			vizualizePointLight(pointLights[i], lightShader, camera, lightVAO);
-
 		}
 		visualizeDirLight(dirLight, lightShader, camera, lightVAO);
 

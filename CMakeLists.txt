@@ -97,6 +97,21 @@ if (PerlinNoise_ADDED)
 	target_include_directories(PerlinNoise INTERFACE ${PerlinNoise_SOURCE_DIR})
 endif()
 
+CPMAddPackage(
+	NAME ImGui
+	VERSION 1.92.5
+	GITHUB_REPOSITORY ocornut/imgui
+	DOWNLOAD_ONLY TRUE
+)
+
+configure_file(
+	${CMAKE_CURRENT_SOURCE_DIR}/cmake/ImGui.cmake
+	${ImGui_SOURCE_DIR}/CMakeLists.txt
+	COPYONLY
+)
+make_directory(${CMAKE_CURRENT_BINARY_DIR}/imgui)
+add_subdirectory(${imgui_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/imgui EXCLUDE_FROM_ALL SYSTEM)
+
 add_executable(prog)
 include("src/filelist.cmake")
 target_compile_features(prog PRIVATE cxx_std_23)
@@ -181,4 +196,5 @@ target_link_libraries(prog PRIVATE glm::glm)
 target_link_libraries(prog PRIVATE Boost::multi_array)
 target_link_libraries(prog PRIVATE stb)
 target_link_libraries(prog PRIVATE PerlinNoise)
+target_link_libraries(prog PRIVATE ImGui)
 
