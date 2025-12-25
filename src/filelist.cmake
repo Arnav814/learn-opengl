@@ -10,6 +10,7 @@ target_sources(prog PRIVATE
 	"./src/mesh.cpp"
 	"./src/model.cpp"
 	"./src/sceneObject.cpp"
+	"./src/sdlConfig.cpp"
 	"./src/shaders.cpp"
 	"./src/stbImageBuild.cpp"
 	"./src/vertexData.cpp"

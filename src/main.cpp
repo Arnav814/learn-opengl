@@ -6,6 +6,7 @@
 #include "lighting.hpp"
 #include "model.hpp"
 #include "object.hpp"
+#include "sdlConfig.hpp"
 #include "shaders.hpp"
 #include "terrain.hpp"
 #include "vertexData.hpp"
@@ -30,40 +31,11 @@
 #include <print>
 #include <string>
 
-constexpr uint INIT_WIDTH = 800, INIT_HEIGHT = 600;
-
-#define CALL_SDL(...) \
-	do { \
-		auto retval = __VA_ARGS__; \
-		if (not retval) { \
-			std::string errContent = SDL_GetError(); \
-			std::string errString = std::format("{} @ {}:{} returned {}: {}", #__VA_ARGS__, \
-			                                    __FILE__, __LINE__, retval, errContent); \
-			throw std::runtime_error(errString); \
-		} \
-	} while (false)
-
 int main(void) {
-	CALL_SDL(SDL_Init(SDL_INIT_VIDEO));
+	// SDL
 
-	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1));
-	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
-	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3));
-	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE));
-	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1));
-	CALL_SDL(SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4));
-
-	SDL_Window* window =
-	    SDL_CreateWindow("[glad] GL with SDL", INIT_WIDTH, INIT_HEIGHT, SDL_WINDOW_OPENGL);
-	CALL_SDL(SDL_SetWindowResizable(window, true));
-	// CALL_SDL(SDL_SetWindowRelativeMouseMode(window, true));
-
-	SDL_GLContext context = SDL_GL_CreateContext(window);
-
-	int version = gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress);
-	std::println("GLAD version: {}", version);
-
-	glViewport(0, 0, INIT_WIDTH, INIT_HEIGHT);
+	SDLData sdl;
+	sdl.setup({800, 600});
 
 	// PERSPECTIVE
 
@@ -71,7 +43,7 @@ int main(void) {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_MULTISAMPLE);
 
-	Camera camera{glm::vec2(INIT_WIDTH, INIT_HEIGHT)};
+	Camera camera{glm::vec2(sdl.initSize)};
 	camera.setPosition(glm::vec3(0, 0, 3));
 
 	LightComponents baseLightColor{
@@ -164,7 +136,7 @@ int main(void) {
 
 	// IMGUI
 
-	makeImGuiContext(context, window);
+	makeImGuiContext(sdl.context, sdl.window);
 
 	// RENDER LOOP
 
@@ -191,7 +163,7 @@ int main(void) {
 				case SDLK_ESCAPE: exit = true; break;
 				case SDLK_T:
 					isFullscreen = not isFullscreen; // toggle fullscreen
-					SDL_SetWindowFullscreen(window, isFullscreen);
+					SDL_SetWindowFullscreen(sdl.window, isFullscreen);
 					break;
 				}
 				scancodeMap.at(event.key.scancode) = false;
@@ -215,10 +187,9 @@ int main(void) {
 		              deltaTime);
 
 		if (resized) {
-			int width, height;
-			CALL_SDL(SDL_GetWindowSizeInPixels(window, &width, &height));
-			camera.setWindowSize(glm::ivec2(width, height));
-			glViewport(0, 0, width, height);
+			glm::ivec2 newSize = sdl.getWindowSize();
+			camera.setWindowSize(newSize);
+			glViewport(0, 0, newSize.x, newSize.y);
 		}
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -261,7 +232,7 @@ int main(void) {
 
 		lastFrameTime = secsSinceInit;
 		imguiRender();
-		SDL_GL_SwapWindow(window);
+		SDL_GL_SwapWindow(sdl.window);
 		SDL_Delay(1'000 / 60);
 	}
 
@@ -269,10 +240,7 @@ int main(void) {
 	glDeleteBuffers(1, &lightVBO);
 
 	cleanupImGuiContext();
-
-	CALL_SDL(SDL_GL_DestroyContext(context));
-	SDL_DestroyWindow(window);
-	SDL_Quit();
+	sdl.destroy();
 
 	return 0;
 }
