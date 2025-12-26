@@ -16,8 +16,8 @@ include(${CMAKE_CURRENT_BINARY_DIR}/cmake/CPM.cmake)
 CPMAddPackage(
 	NAME SDL
 	GITHUB_REPOSITORY "libsdl-org/SDL"
-	VERSION "3.2.12"
-	GIT_TAG "release-3.2.12"
+	VERSION "3.2.28"
+	GIT_TAG "release-3.2.28"
 	EXCLUDE_FROM_ALL ON
 	SYSTEM ON
 	OPTIONS
@@ -50,7 +50,7 @@ CPMAddPackage(
 CPMAddPackage(
 	NAME glm
 	GITHUB_REPOSITORY "g-truc/glm"
-	GIT_TAG "1.0.1"
+	GIT_TAG "1.0.2"
 	EXCLUDE_FROM_ALL ON
 	SYSTEM ON
 	OPTIONS
@@ -59,10 +59,10 @@ CPMAddPackage(
 
 CPMAddPackage(
 	NAME Boost
-	VERSION "1.88.0"
+	VERSION "1.90.0"
 	# cloning is slow
-	URL "https://github.com/boostorg/boost/releases/download/boost-1.88.0/boost-1.88.0-cmake.tar.xz"
-	URL_HASH SHA256=f48b48390380cfb94a629872346e3a81370dc498896f16019ade727ab72eb1ec
+	URL "https://github.com/boostorg/boost/releases/download/boost-1.90.0/boost-1.90.0-cmake.tar.xz"
+	URL_HASH SHA256=aca59f889f0f32028ad88ba6764582b63c916ce5f77b31289ad19421a96c555f
 	OPTIONS
 		"BOOST_ENABLE_CMAKE ON"
 		"BOOST_SKIP_INSTALL_RULES ON"
@@ -74,7 +74,7 @@ CPMAddPackage(
 	NAME stb
 	GITHUB_REPOSITORY "nothings/stb"
 	VERSION 2.30 # version for stb_image.h: all of them have different versions
-	GIT_TAG "f0569113c93ad095470c54bf34a17b36646bbbb5"
+	GIT_TAG "f1c79c02822848a9bed4315b12c8c8f3761e1296"
 	DOWNLOAD_ONLY ON
 	SYSTEM ON
 )
