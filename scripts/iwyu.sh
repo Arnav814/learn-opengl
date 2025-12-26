@@ -1,9 +1,13 @@
 #! /usr/bin/env bash
 set -euo pipefail
 
-processing="$(realpath "$1")"
-clang_cmd="$(jq -r ".[] | select(.file == \"$processing\").command" ./build/compile_commands.json)"
-clang_args="$(grep -oP '(?<= ).*' <<< "$clang_cmd" | sed -e 's/\\"/"/g')"
+# only run iwyu on files that are actually from this project
+source_dir="$(realpath "$(dirname "$(realpath "$0")")"/../src)"
+filtered_compile_commands="$(mktemp --suffix=.json)"
+jq ".[] | select(.file | startswith(\"$source_dir\"))" ./build/compile_commands.json \
+	| jq --slurp > "$filtered_compile_commands"
 
-iwyu -Xiwyu --keep="common.hpp" -Xiwyu --cxx17ns $clang_args "$@"
+iwyu_tool "-j$(nproc)" -p "$filtered_compile_commands" "$@"
+
+rm "$filtered_compile_commands"
 
