@@ -97,6 +97,8 @@ class BaseSceneGraphObject : public BaseSceneGraphNode {
 		this->transform = transform;
 	}
 
+	void setTransform(const glm::mat4& transform) { this->transform = transform; }
+
 	virtual SceneCascade getNodeCascade() const { return {this->transform}; }
 
 	virtual ~BaseSceneGraphObject() = default;

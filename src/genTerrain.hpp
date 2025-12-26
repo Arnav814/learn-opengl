@@ -28,7 +28,7 @@ class Terrain : public BaseSceneGraphObject {
 	DSColor bottomColor;
 	DSColor topColor;
 	Shaders::Terrain shader;
-	glm::vec2 size;
+	glm::vec3 size;
 	glm::uvec2 samples;
 	siv::PerlinNoise noise;
 
@@ -39,12 +39,15 @@ class Terrain : public BaseSceneGraphObject {
 	}
 
 	glm::vec3 pointFromData(const boost::multi_array<float, 2>& data, const glm::uvec2 point,
-	                        const glm::vec2 scale,
+	                        const glm::vec3 scale,
 	                        const float fallback = std::numeric_limits<float>::quiet_NaN());
+
+	// handles scaling
+	glm::vec3 pointAt(const glm::vec2& pos);
 
   public:
 	Terrain(const ulong& seed, const float& shininess, const DSColor& bottomColor,
-	        const DSColor& topColor, const glm::vec2& size, const glm::uvec2& samples,
+	        const DSColor& topColor, const glm::vec3& size, const glm::uvec2& samples,
 	        const Shaders::Terrain shader)
 	    : BaseSceneGraphObject(glm::mat4(1)) {
 		this->seed = seed;

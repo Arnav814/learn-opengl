@@ -56,6 +56,7 @@ uniform SpotLight spotLight;
 uniform DirectionalLight dirLight;
 uniform PointLight pointLights[POINT_LIGHT_COUNT];
 uniform TerrMaterial material;
+uniform bool displayNormals;
 
 vec3 calcDirLight(DirectionalLight light, vec3 normal, vec3 viewDir, vec3 diffVal, vec3 specVal);
 vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir, vec3 diffVal, vec3 specVal);
@@ -79,6 +80,9 @@ void main() {
 
 	// spot light
 	result += calcSpotLight(spotLight, normal, fragPos, viewDir, diffVal, specVal);
+
+	if (displayNormals)
+		result = (normal + vec3(1)) / 2.;
 
 	fragColor = vec4(result, 1.0f);
 } 

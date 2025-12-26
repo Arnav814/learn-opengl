@@ -1,37 +1,42 @@
 #include "genTerrain.hpp"
 
+#include "glmFormatters.hpp"
+
+#include <glm/geometric.hpp>
+
 glm::vec3 Terrain::pointFromData(const boost::multi_array<float, 2>& data, const glm::uvec2 point,
-                                 const glm::vec2 scale, const float fallback) {
+                                 const glm::vec3 scale, const float fallback) {
 	float value;
 	if (point.x >= 0 and point.x < data.shape()[0] and point.y >= 0 and point.y < data.shape()[1])
 		value = data[point.x][point.y];
 	else value = fallback;
-	return glm::vec3(point.x * scale.x, value, point.y * scale.y);
+	return {point.x * scale.x, value, point.y * scale.y};
+}
+
+glm::vec3 Terrain::pointAt(const glm::vec2& pos) {
+	return {pos.x, this->noise.noise2D_01(pos.x, pos.y) * this->size.z, pos.y};
 }
 
 Mesh<ColorVertex, Shaders::Terrain> Terrain::getTerrain() {
-	glm::vec2 scale = glm::vec2(this->size.x / this->samples.x, this->size.y / this->samples.y);
+	glm::vec3 scale = {this->size.x / this->samples.x, this->size.y / this->samples.y,
+	                   this->size.z};
 	boost::multi_array<float, 2> terrainData(boost::extents[this->samples.x][this->samples.y]);
+	boost::multi_array<glm::vec3, 2> terrainNormals(
+	    boost::extents[this->samples.x][this->samples.y]);
 
 	for (uint y = 0; y < this->samples.y; y++) {
 		for (uint x = 0; x < this->samples.x; x++) {
-			terrainData[x][y] = this->noise.noise2D_01(x * scale.x, y * scale.y);
-		}
-	}
-
-	std::vector<ColorVertex> verticies;
-
-	for (uint y = 0; y < this->samples.y; y++) {
-		for (uint x = 0; x < this->samples.x; x++) {
-			glm::vec3 position = this->pointFromData(terrainData, {x, y}, scale);
+			glm::vec3 position = this->pointAt({x * scale.x, y * scale.y});
+			terrainData[x][y] = position.y;
+			// a small number
+			float small = fmin(this->size.x / this->samples.x, this->size.y / this->samples.y) / 10;
 
 			// stored clockwise
 			std::array<glm::vec3, 4> nearbyPoints{
-			    // fallback to this position's height to make corners mostly work
-			    this->pointFromData(terrainData, {x + 1, y}, scale, position.y),
-			    this->pointFromData(terrainData, {x, y - 1}, scale, position.y),
-			    this->pointFromData(terrainData, {x - 1, y}, scale, position.y),
-			    this->pointFromData(terrainData, {x, y + 1}, scale, position.y),
+			    this->pointAt({position.x + small, position.z}),
+			    this->pointAt({position.x, position.z - small}),
+			    this->pointAt({position.x - small, position.z}),
+			    this->pointAt({position.x, position.z + small}),
 			};
 
 			// normalized vectors from this position to each nearby point
@@ -52,15 +57,26 @@ Mesh<ColorVertex, Shaders::Terrain> Terrain::getTerrain() {
 
 			// average the array
 			glm::vec3 averageNormal =
-			    std::accumulate(ALL_OF(normalsWith), glm::vec3(0)) / glm::vec3(normalsWith.size());
+			    glm::normalize(std::accumulate(ALL_OF(normalsWith), glm::vec3(0)));
+			terrainNormals[x][y] = averageNormal;
+		}
+	}
+
+	std::vector<ColorVertex> verticies;
+
+	for (uint y = 0; y < this->samples.y; y++) {
+		for (uint x = 0; x < this->samples.x; x++) {
+			glm::vec3 position = this->pointFromData(terrainData, {x, y}, scale);
+			glm::vec3 normal = terrainNormals[x][y];
+
 			glm::vec3 diffuse =
-			    glm::mix(this->bottomColor.diffuse, this->topColor.diffuse, position.y);
+			    glm::mix(this->bottomColor.diffuse, this->topColor.diffuse, position.y / scale.z);
 			glm::vec3 specular =
-			    glm::mix(this->bottomColor.specular, this->topColor.specular, position.y);
+			    glm::mix(this->bottomColor.specular, this->topColor.specular, position.y / scale.z);
 
 			verticies.push_back(ColorVertex{
 			    .position = position,
-			    .normal = averageNormal, // TODO: fix artifacts in normals with strange X patterns
+			    .normal = normal, // TODO: fix artifacts in normals with strange X patterns
 			    .diffuse = diffuse,
 			    .specular = specular,
 			});

@@ -107,7 +107,8 @@ int main(void) {
 	    glm::vec3(0.25, 0.60, 0.04),
 	    glm::vec3(0.25, 0.60, 0.04) / 4.f,
 	};
-	Terrain terrain{123'123, 32, grass, sand, glm::vec2(50), glm::ivec2(250), terrainShader};
+	Terrain terrain{123'123, 32, grass, sand, glm::vec3(5, 5, 5), glm::ivec2(25), terrainShader};
+	terrain.setTransform(glm::translate(glm::identity<glm::mat4>(), {5, 0, 0}));
 	scene->addChild(std::make_shared<Terrain>(terrain));
 	std::println("Done.");
 
@@ -146,6 +147,8 @@ int main(void) {
 	bool isFullscreen = false;
 	// switch from interacting with the GUI to the camera
 	bool cameraInteraction = true;
+	bool showWireframe = false;
+	bool displayNormals = false;
 
 	bool exit = false;
 	bool resized = true; // populate the perspective matrix
@@ -186,7 +189,6 @@ int main(void) {
 		}
 
 		imguiFrameStart();
-		ImGui::ShowDemoWindow();
 
 		if (cameraInteraction)
 			camera.moveBy(scancodeMap[SDL_SCANCODE_W], //
@@ -203,7 +205,10 @@ int main(void) {
 			glViewport(0, 0, newSize.x, newSize.y);
 		}
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		ImGui::Checkbox("Show Wireframe", &showWireframe);
+		if (showWireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 		glClearColor(0.1, 0.1, 0.1, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBindVertexArray(lightVAO);
@@ -223,6 +228,9 @@ int main(void) {
 
 		terrainShader->setDirLight(dirLight);
 		terrainShader->setPointLights(pointLights);
+
+		ImGui::Checkbox("Display Normals", &displayNormals);
+		terrainShader->setDisplayNormals(displayNormals);
 
 		// move spotlight to camera to act as a flashlight
 		flashlight = baseSpotLight;
