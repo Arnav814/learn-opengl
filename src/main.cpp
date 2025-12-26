@@ -218,18 +218,20 @@ int main(void) {
 		objShader->setDirLight(dirLight);
 		objShader->setPointLights(pointLights);
 
+		ImGui::Checkbox("Display Normals", &displayNormals);
+
 		// move spotlight to camera to act as a flashlight
 		Shaders::SpotLight flashlight = baseSpotLight;
 		flashlight.position = camera.getPosition();
 		flashlight.direction = camera.getFront();
 		objShader->setSpotLight(flashlight);
+		objShader->setDisplayNormals(displayNormals);
 
 		terrainShader->use();
 
 		terrainShader->setDirLight(dirLight);
 		terrainShader->setPointLights(pointLights);
 
-		ImGui::Checkbox("Display Normals", &displayNormals);
 		terrainShader->setDisplayNormals(displayNormals);
 
 		// move spotlight to camera to act as a flashlight
