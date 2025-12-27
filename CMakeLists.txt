@@ -99,14 +99,14 @@ endif()
 
 CPMAddPackage(
 	NAME ImGui
-	VERSION 1.92.5
-	GITHUB_REPOSITORY ocornut/imgui
+	GITHUB_REPOSITORY "ocornut/imgui"
+	VERSION "1.92.5"
 	DOWNLOAD_ONLY TRUE
 )
 
 configure_file(
-	${CMAKE_CURRENT_SOURCE_DIR}/cmake/ImGui.cmake
-	${ImGui_SOURCE_DIR}/CMakeLists.txt
+	"${CMAKE_CURRENT_SOURCE_DIR}/cmake/ImGui.cmake"
+	"${ImGui_SOURCE_DIR}/CMakeLists.txt"
 	COPYONLY
 )
 make_directory(${CMAKE_CURRENT_BINARY_DIR}/imgui)

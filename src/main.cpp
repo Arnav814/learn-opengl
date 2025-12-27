@@ -6,6 +6,7 @@
 #include "lighting.hpp"
 #include "model.hpp"
 #include "object.hpp"
+#include "sceneConf.hpp"
 #include "sdlConfig.hpp"
 #include "shaders.hpp"
 #include "terrain.hpp"
@@ -79,41 +80,15 @@ int main(void) {
 
 	std::print("Compiling shaders... ");
 	std::fflush(stdout);
-	Shaders::Object objShader = Shaders::ObjectImpl::make();
-	Shaders::Terrain terrainShader = Shaders::TerrainImpl::make();
-	Shaders::LightCube lightShader = Shaders::LightCubeImpl::make();
-	std::println("Done.");
-
-	// MODELS
-
-	std::print("Loading models... ");
-	std::fflush(stdout);
-
-	std::shared_ptr<SceneGraphRoot> scene = std::make_shared<SceneGraphRoot>();
-	scene->addChild(
-	    std::shared_ptr<Model>(new Model{MEDIA_DIR "./backpack/backpack.obj", objShader}));
-
-	std::println("Done.");
-
-	// TERRAIN
-
-	std::print("Generating terrain... ");
-	std::fflush(stdout);
-	constexpr DSColor grass{
-	    glm::vec3(0.96, 0.84, 0.69),
-	    glm::vec3(0.96, 0.84, 0.69) / 16.f,
+	ShaderContainer shaders{
+	    .objShader = Shaders::ObjectImpl::make(),
+	    .terrainShader = Shaders::TerrainImpl::make(),
+	    .lightShader = Shaders::LightCubeImpl::make(),
 	};
-	constexpr DSColor sand{
-	    glm::vec3(0.25, 0.60, 0.04),
-	    glm::vec3(0.25, 0.60, 0.04) / 4.f,
-	};
-	Terrain terrain{123'123, 32, grass, sand, glm::vec3(5, 5, 5), glm::ivec2(25), terrainShader};
-	terrain.setTransform(glm::translate(glm::identity<glm::mat4>(), {5, 0, 0}));
-	scene->addChild(std::make_shared<Terrain>(terrain));
 	std::println("Done.");
 
-	std::vector<SceneCascade> stack{};
-	recursivelyPrint(scene, stack);
+	// SCENE
+	auto scene = initScene(shaders);
 
 	// LIGHT BUFFERS
 
@@ -136,7 +111,6 @@ int main(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// IMGUI
-
 	makeImGuiContext(sdl.context, sdl.window);
 
 	// RENDER LOOP
@@ -213,10 +187,10 @@ int main(void) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBindVertexArray(lightVAO);
 
-		objShader->use();
+		shaders.objShader->use();
 
-		objShader->setDirLight(dirLight);
-		objShader->setPointLights(pointLights);
+		shaders.objShader->setDirLight(dirLight);
+		shaders.objShader->setPointLights(pointLights);
 
 		ImGui::Checkbox("Display Normals", &displayNormals);
 
@@ -224,32 +198,32 @@ int main(void) {
 		Shaders::SpotLight flashlight = baseSpotLight;
 		flashlight.position = camera.getPosition();
 		flashlight.direction = camera.getFront();
-		objShader->setSpotLight(flashlight);
-		objShader->setDisplayNormals(displayNormals);
+		shaders.objShader->setSpotLight(flashlight);
+		shaders.objShader->setDisplayNormals(displayNormals);
 
-		terrainShader->use();
+		shaders.terrainShader->use();
 
-		terrainShader->setDirLight(dirLight);
-		terrainShader->setPointLights(pointLights);
+		shaders.terrainShader->setDirLight(dirLight);
+		shaders.terrainShader->setPointLights(pointLights);
 
-		terrainShader->setDisplayNormals(displayNormals);
+		shaders.terrainShader->setDisplayNormals(displayNormals);
 
 		// move spotlight to camera to act as a flashlight
 		flashlight = baseSpotLight;
 		flashlight.position = camera.getPosition();
 		flashlight.direction = camera.getFront();
-		terrainShader->setSpotLight(flashlight);
+		shaders.terrainShader->setSpotLight(flashlight);
 
 		std::vector<SceneCascade> stack{};
 		recursivelyRender(scene, camera, stack);
 
 		glBindVertexArray(0);
-		objShader->stopUsing();
+		shaders.objShader->stopUsing();
 
 		for (uint i = 0; i < pointLights.size(); i++) {
-			vizualizePointLight(pointLights[i], lightShader, camera, lightVAO);
+			vizualizePointLight(pointLights[i], shaders.lightShader, camera, lightVAO);
 		}
-		visualizeDirLight(dirLight, lightShader, camera, lightVAO);
+		visualizeDirLight(dirLight, shaders.lightShader, camera, lightVAO);
 
 		lastFrameTime = secsSinceInit;
 		imguiRender();

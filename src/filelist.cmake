@@ -9,6 +9,7 @@ target_sources(prog PRIVATE
 	"./src/main.cpp"
 	"./src/mesh.cpp"
 	"./src/model.cpp"
+	"./src/sceneConf.cpp"
 	"./src/sceneObject.cpp"
 	"./src/sdlConfig.cpp"
 	"./src/shaders.cpp"
