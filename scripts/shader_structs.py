@@ -124,9 +124,7 @@ def parse_scalar(typename: str) -> BasicSerializable:
 
 
 VECTOR_PARSE: re.Pattern = re.compile(r"(?P<type>[biufd])?vec(?P<dims>[234])")
-GLM_NAMESPACE: re.Pattern = re.compile(r"^glm::")
 def parse_vector(typename: str) -> BasicSerializable:
-    typename = re.sub(GLM_NAMESPACE, "", typename)
     vec_match: re.Match | None = re.fullmatch(VECTOR_PARSE, typename)
     if vec_match is None:
         raise InvalidParse()
@@ -174,6 +172,9 @@ STRUCT_PARSE: re.Pattern = \
     re.compile(r"struct\s+(?P<name>\S+)\s*{(?P<contents>.*?)}\s*;", re.DOTALL)
 VAR_PARSE: re.Pattern = \
     re.compile(r"(?P<type>[^\s\{\}\]\[\]\|\\\;]+)\s+(?P<var>[^[^\s\{\}\]\[\]\|\\\;]+)\s*(\[(?P<length>\d+)\])?\s*;", re.DOTALL)
+# same as VAR_PARSE, but length is mandatory
+ARRAY_PARSE: re.Pattern = \
+    re.compile(r"(?P<type>[^\s\{\}\]\[\]\|\\\;]+)\s+(?P<var>[^[^\s\{\}\]\[\]\|\\\;]+)\s*(\[(?P<length>\d+)\])\s*;", re.DOTALL)
 
 
 # does NOT update the struct table by itself
@@ -216,10 +217,15 @@ def generate_setter(struct: Struct) -> str:
 WHITESPACE: re.Pattern = re.compile(r"\s+")
 WHITESPACED_SYMBOLS: re.Pattern = re.compile(r"\s*([{}[\];])\s*")
 
+# performs simple replacements that need to happen before further parsing
+def init_convert_struct(struct: str) -> str:
+    struct = struct.replace("sampler2D", "uint")
+    return struct
+
 # uses regex to convert the struct to cpp code
 def convert_struct(struct: str) -> str:
     struct = re.sub(VECTOR_PARSE, "glm::\\g<0>", struct)
-    struct = struct.replace("sampler2D", "uint")
+    struct = re.sub(ARRAY_PARSE, "std::array<\\g<type>, \\g<length>> \\g<var>;", struct)
 
     # get the struct to a known state, so it can be hashed
     struct = re.sub(WHITESPACE, " ", struct)
@@ -230,10 +236,11 @@ def convert_struct(struct: str) -> str:
 # generates the code for a struct, returns the code
 # updates the struct table automatically
 def process_struct(struct_def: str, struct_table: dict[str, Struct]) -> tuple[Struct, str]:
-    struct_def = convert_struct(struct_def)
+    struct_def = init_convert_struct(struct_def)
     struct = parse_struct(struct_def, struct_table)
     struct_table[struct.name] = struct
     setter: str = generate_setter(struct)
+    struct_def = convert_struct(struct_def)
     return struct, struct_def + "\n\n" + setter # the \n\n is used for seperation later
 
 if __name__ == "__main__":
