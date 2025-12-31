@@ -67,7 +67,7 @@ CPMAddPackage(
 		"BOOST_ENABLE_CMAKE ON"
 		"BOOST_SKIP_INSTALL_RULES ON"
 		"BUILD_SHARED_LIBS OFF"
-		"BOOST_INCLUDE_LIBRARIES multi_array" # use \\\; as a delimiter
+		"BOOST_INCLUDE_LIBRARIES multi_array\\\;program_options" # use \\\; as a delimiter
 )
 
 CPMAddPackage(
@@ -194,6 +194,7 @@ target_link_libraries(prog PRIVATE assimp::assimp)
 target_link_libraries(prog PRIVATE magic_enum::magic_enum)
 target_link_libraries(prog PRIVATE glm::glm)
 target_link_libraries(prog PRIVATE Boost::multi_array)
+target_link_libraries(prog PRIVATE Boost::program_options)
 target_link_libraries(prog PRIVATE stb)
 target_link_libraries(prog PRIVATE PerlinNoise)
 target_link_libraries(prog PRIVATE ImGui)

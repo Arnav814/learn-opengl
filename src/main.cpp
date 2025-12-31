@@ -32,7 +32,10 @@
 #include <print>
 #include <string>
 
-int main(void) {
+int main(int argc, char** argv) {
+	std::shared_ptr<Config> conf = parseArgs(argc, argv);
+	if (conf == NULL) return 0;
+
 	// SDL
 
 	SDLData sdl;
@@ -88,7 +91,7 @@ int main(void) {
 	std::println("Done.");
 
 	// SCENE
-	auto scene = initScene(shaders);
+	auto scene = initScene(shaders, *conf);
 
 	// LIGHT BUFFERS
 
