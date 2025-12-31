@@ -28,9 +28,14 @@ def extract_version(data: list[str]) -> str:
 
 def preprocess(content: str) -> str:
     as_bytes = content.encode("utf8")
-    # TODO: use the configured compiler
-    process = subprocess.run(["clang", "-E", "--no-standard-includes", "--comments", "-"],
-                             input=as_bytes, capture_output=True, check=True)
+    try:
+        # TODO: use the configured compiler
+        process = subprocess.run(["clang", "-E", "--no-standard-includes", "-I", "../src/shaders", "--comments", "-"],
+                                 input=as_bytes, capture_output=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(e.stderr)
+        exit(e.returncode)
+
     stderr_decoded: str = process.stderr.decode("utf8")
     stdout_decoded: str = process.stdout.decode("utf8")
     if stderr_decoded != "":
