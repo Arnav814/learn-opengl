@@ -114,8 +114,11 @@ def make_struct_setter(struct: Struct) -> str:
 
     for i in struct.contents:
         if isinstance(i[0], shader_structs.Array):
-            raise NotImplementedError("Arrays in structs in uniforms aren't implemented yet!")
-        func += f"\tthis->setUniform(name + \".{i[1]}\", val.{i[1]});\n"
+            func += f"\tfor (int i = 0; i < {i[0].length}; i++) {{\n"
+            func += f"\t\tthis->setUniform(name + \".{i[1]}[\" + std::to_string(i) + \"]\", val.{i[1]}[i]);\n"
+            func += "\t}\n"
+        else:
+            func += f"\tthis->setUniform(name + \".{i[1]}\", val.{i[1]});\n"
 
     func += "}\n"
     return func

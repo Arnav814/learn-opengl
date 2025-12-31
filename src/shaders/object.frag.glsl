@@ -15,12 +15,19 @@ uniform PointLight pointLights[POINT_LIGHT_COUNT];
 uniform Material material;
 uniform bool displayNormals;
 
-// #define MAX_LIGHTS_PER_TYPE 10
-// layout (std140) uniform Lights {
-// 	SpotLight[MAX_LIGHTS_PER_TYPE] spotLights;
-// 	DirectionalLight[MAX_LIGHTS_PER_TYPE] dirLights;
-// 	PointLight[MAX_LIGHTS_PER_TYPE] pointLights;
-// };
+#define MAX_LIGHTS_PER_TYPE 10
+struct LightInfo {
+	SpotLight spotLights[MAX_LIGHTS_PER_TYPE];
+	uint spotLightsLength;
+	DirectionalLight dirLights[MAX_LIGHTS_PER_TYPE];
+	uint dirLightsLength;
+	PointLight pointLights[MAX_LIGHTS_PER_TYPE];
+	uint pointLightsLength;
+};
+
+layout (std140) uniform Lights {
+	LightInfo lights;
+};
 
 void main() {
 	// basic properties

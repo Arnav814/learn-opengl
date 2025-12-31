@@ -173,7 +173,7 @@ def parse_typename(typename: str, struct_table: dict[str, Struct]) -> BasicSeria
 STRUCT_PARSE: re.Pattern = \
     re.compile(r"struct\s+(?P<name>\S+)\s*{(?P<contents>.*?)}\s*;", re.DOTALL)
 VAR_PARSE: re.Pattern = \
-    re.compile(r"(?P<type>[^\s\{\}\]\[\]\|\\\;]+)\s*(?P<var>[^[^\s\{\}\]\[\]\|\\\;]+)\s*(\[(?P<length>\d+)\])?\s*;", re.DOTALL)
+    re.compile(r"(?P<type>[^\s\{\}\]\[\]\|\\\;]+)\s+(?P<var>[^[^\s\{\}\]\[\]\|\\\;]+)\s*(\[(?P<length>\d+)\])?\s*;", re.DOTALL)
 
 
 # does NOT update the struct table by itself
@@ -188,7 +188,7 @@ def parse_struct(struct_def: str, struct_table: dict[str, Struct]) -> Struct:
     for match in re.finditer(VAR_PARSE, regexed.group("contents")):
         # TODO: support multi-dimensional arrays
         base_type: BasicSerializable | Struct = parse_typename(match.group("type"), struct_table)
-        if match.group("length") is not None :
+        if match.group("length") is not None:
             actual_type: BasicSerializable | Array | Struct = \
                 Array(base_type, int(match.group("length")))
         else:

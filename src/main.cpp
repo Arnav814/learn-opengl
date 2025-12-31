@@ -113,6 +113,11 @@ int main(int argc, char** argv) {
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+	uint lightUBO;
+	glGenBuffers(1, &lightUBO);
+	glBindBuffer(GL_UNIFORM_BUFFER, lightUBO);
+	// TODO: finish
+
 	// IMGUI
 	makeImGuiContext(sdl.context, sdl.window);
 
